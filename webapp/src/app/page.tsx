@@ -1,18 +1,22 @@
 import Link from "next/link";
 import { 
-  Cpu, 
+  ArrowRight, 
+  ChevronDown, 
   ShieldCheck, 
-  Zap, 
-  Camera,
-  Server,
+  Eye, 
+  Store, 
+  Car, 
+  Factory, 
+  Cpu, 
+  Lock, 
+  Server, 
   Network,
-  ArrowRight,
-  MonitorSmartphone,
-  Eye,
   Activity,
-  Users
+  FileJson,
+  Video
 } from "lucide-react";
 
+// Alaf Vision Logo (Kurumsal, teknolojik ve güven veren bir tasarım)
 const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -20,234 +24,320 @@ const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
     className={className}
     fill="none"
   >
-    <circle cx="50" cy="50" r="40" className="stroke-blue-500" strokeWidth="8" />
-    <circle cx="50" cy="50" r="20" className="fill-purple-500" />
-    <circle cx="20" cy="50" r="8" className="fill-pink-500" />
-    <circle cx="80" cy="50" r="8" className="fill-blue-400" />
-    <circle cx="50" cy="20" r="8" className="fill-indigo-400" />
-    <circle cx="50" cy="80" r="8" className="fill-purple-400" />
-    <path d="M26 50 Q50 20 74 50" className="stroke-blue-500" strokeWidth="4" />
-    <path d="M26 50 Q50 80 74 50" className="stroke-purple-500" strokeWidth="4" />
-    <path d="M50 26 Q80 50 50 74" className="stroke-indigo-500" strokeWidth="4" />
-    <path d="M50 26 Q20 50 50 74" className="stroke-pink-500" strokeWidth="4" />
+    <rect x="20" y="20" width="60" height="60" rx="14" className="stroke-blue-600" strokeWidth="6" />
+    <circle cx="50" cy="50" r="16" className="fill-blue-500" />
+    <path d="M50 20 L50 34 M50 80 L50 66 M20 50 L34 50 M80 50 L66 50" className="stroke-blue-400" strokeWidth="4" strokeLinecap="round" />
   </svg>
 );
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 selection:bg-purple-500/30 overflow-hidden relative">
-      {/* Background Effects */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/20 blur-[120px]" />
-        
-        {/* Animated Grid */}
+    <div className="min-h-screen bg-slate-950 text-slate-300 selection:bg-blue-500/30 font-sans overflow-x-hidden">
+      
+      {/* --- BACKGROUND EFFECTS --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px]" />
         <div 
-          className="absolute inset-0 opacity-[0.03]" 
+          className="absolute inset-0 opacity-[0.02]" 
           style={{ 
             backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
             backgroundSize: `40px 40px`,
-            maskImage: `linear-gradient(to bottom, transparent, black, transparent)`
           }} 
         />
       </div>
 
-      {/* Navbar */}
-      <nav className="relative z-10 container mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Logo className="w-10 h-10 animate-pulse" />
-          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
-            Alaf Plate
-          </span>
+      {/* --- NAVBAR --- */}
+      <nav className="relative z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Logo className="w-9 h-9" />
+            <span className="text-2xl font-bold tracking-tight text-white">
+              Alaf <span className="text-blue-500">Vision</span>
+            </span>
+          </div>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
+            <a href="#cozumler" className="hover:text-white transition-colors">Çözümler</a>
+            <a href="#edge-ai" className="hover:text-white transition-colors">Edge AI</a>
+            <a href="#guvenilirlik" className="hover:text-white transition-colors">Güvenilirlik</a>
+          </div>
+          <Link 
+            href="https://vision.alafteknoloji.com/login" 
+            className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]"
+          >
+            Müşteri Girişi
+          </Link>
         </div>
-        <Link 
-          href="/login" 
-          className="relative inline-flex h-10 items-center justify-center overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
-        >
-          <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-          <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-slate-950 px-6 py-1 text-sm font-medium text-white backdrop-blur-3xl transition-colors hover:bg-slate-900">
-            Sisteme Giriş
-          </span>
-        </Link>
       </nav>
 
-      {/* Hero Section */}
-      <main className="relative z-10 flex flex-col items-center justify-center pt-20 pb-16 px-4 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-8">
+      {/* --- 1. HERO SECTION --- */}
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] px-4 text-center pb-20 pt-10">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider mb-8">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
           </span>
-          Akıllı Görüntü Analizi Sistemi Aktif
+          Alaf Teknoloji Yapay Zeka Altyapısı
         </div>
         
-        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 text-white max-w-4xl mx-auto leading-tight">
-          Alaf Plate ile <br className="hidden md:block" />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500">
-            Sınırları Aşan Yapay Zeka
+        <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-white max-w-5xl mx-auto leading-[1.1]">
+          Görüntü İşleme ve Yapay Zekanın <br className="hidden md:block" />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-cyan-400">
+            Uç Noktası: Alaf Vision
           </span>
         </h1>
         
-        <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
-          Kamera ile çekilen görüntüde özelleşmiş aramalar yapan yeni nesil sistem. 
-          Şu an demo olarak Plaka, Araç, Marka ve Model tanıma hizmeti sunarken; 
-          yakında Yüz Tanıma, Kişi Sayma, Odak Ölçme ve AI tabanlı Anomali Tespiti gibi devrimsel özelliklerle gücüne güç katıyor.
+        <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed font-light">
+          İhtiyacınıza özel eğitilmiş yapay zeka modelleriyle kameralarınızı akıllı sensörlere dönüştürün. Perakendeden savunma sanayisine, veriyi dışarı çıkarmadan yerelde (Edge) analiz eden kaya gibi sağlam sistemler tasarlıyoruz.
         </p>
         
-        <Link 
-          href="/login" 
-          className="group relative inline-flex items-center justify-center gap-2 bg-white text-slate-950 px-8 py-3.5 rounded-full font-semibold text-lg hover:bg-slate-200 transition-all duration-300 hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)] hover:shadow-[0_0_30px_rgba(255,255,255,0.5)]"
-        >
-          Canlı Demoyu Başlat
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-        </Link>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link 
+            href="https://vision.alafteknoloji.com/login" 
+            className="group relative inline-flex items-center justify-center gap-2 bg-blue-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:bg-blue-500 transition-all duration-300 w-full sm:w-auto shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)]"
+          >
+            Canlı Demo: Plaka ve Araç Tespiti
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <a 
+            href="#cozumler"
+            className="group inline-flex items-center justify-center gap-2 bg-slate-800/50 text-white px-8 py-4 rounded-xl font-semibold text-lg border border-white/10 hover:bg-slate-800 transition-all duration-300 w-full sm:w-auto"
+          >
+            Senaryoları Keşfedin
+            <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform text-slate-400" />
+          </a>
+        </div>
       </main>
 
-      {/* Features Section */}
-      <section className="relative z-10 container mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {/* Card 1 */}
-          <div className="group p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-blue-500/30 transition-colors backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6">
-              <Camera className="w-7 h-7 text-blue-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Çoklu Kamera</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              Farklı noktalardaki kameraları tek bir merkeze bağlayarak geniş çaplı ve eşzamanlı izleme, analiz yeteneği.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="group p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-indigo-500/30 transition-colors backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6">
-              <Users className="w-7 h-7 text-indigo-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Kişi Sayma & Yüz Tanıma</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              Etkinlikler ve alanlar için hassas kişi sayma ile birlikte gelişmiş yüz tanıma sistemi.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="group p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-purple-500/30 transition-colors backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-14 h-14 rounded-2xl bg-purple-500/10 flex items-center justify-center mb-6">
-              <Eye className="w-7 h-7 text-purple-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Odak Ölçme</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              AVM içi dükkanlar ve reyonlar için müşteri odak ölçümü ve ısı haritaları oluşturma.
-            </p>
-          </div>
-
-          {/* Card 4 */}
-          <div className="group p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-pink-500/30 transition-colors backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-pink-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-14 h-14 rounded-2xl bg-pink-500/10 flex items-center justify-center mb-6">
-              <Activity className="w-7 h-7 text-pink-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Anomali Tespiti</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              Yapay zeka ile hırsızlık, silah/kesici alet algılama, madde etkisinde olma durumu veya agresiflik tespiti.
-            </p>
-          </div>
-
-          {/* Card 5 */}
-          <div className="group p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-orange-500/30 transition-colors backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-6">
-              <Server className="w-7 h-7 text-orange-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">Bare-Metal Performans</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              Docker gibi sanallaştırma katmanlarını ortadan kaldırarak, donanımın tüm gücünü doğrudan işletim sistemi üzerinden kullanır.
-            </p>
-          </div>
-          
-          {/* Card 6 */}
-          <div className="group p-8 rounded-3xl bg-slate-900/50 border border-white/5 hover:border-cyan-500/30 transition-colors backdrop-blur-sm relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-6">
-              <Zap className="w-7 h-7 text-cyan-400" />
-            </div>
-            <h3 className="text-xl font-bold text-white mb-3">TensorRT Hızlandırması</h3>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              CUDA çekirdeklerinin gücüyle donanımsal hızlandırma. Milisaniyeler seviyesinde kesintisiz canlı veri akışı.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* How it Works Section */}
-      <section className="relative z-10 py-16 bg-slate-900/30 border-y border-white/5">
+      {/* --- 2. ÇÖZÜM SENARYOLARIMIZ --- */}
+      <section id="cozumler" className="relative z-10 py-24 bg-slate-950/50 border-t border-white/5">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-white mb-4">Nasıl Çalışır?</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">Görüntünün işlenip size ulaşma süreci.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Çözüm Senaryolarımız</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto text-lg">
+              Sektörünüze özel geliştirilmiş, tak-çalıştır ve yüksek doğruluk oranına sahip yapay zeka modülleri.
+            </p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-4 max-w-5xl mx-auto">
-            {/* Step 1 */}
-            <div className="flex flex-col items-center text-center p-6 bg-slate-800/40 rounded-2xl border border-white/5 w-full md:w-1/5 shadow-lg">
-              <div className="w-14 h-14 rounded-full bg-slate-700/50 flex items-center justify-center mb-4 text-blue-400">
-                <Camera size={26} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
+            {/* Perakende Analitiği */}
+            <div className="group p-8 rounded-3xl bg-slate-900 border border-white/5 hover:border-blue-500/30 transition-all hover:bg-slate-800/80">
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6">
+                <Store className="w-7 h-7 text-blue-400" />
               </div>
-              <h4 className="text-white font-medium mb-2">Kamera</h4>
-              <p className="text-xs text-slate-400">Görüntü kaynağı (Mobil, IP vb.)</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Perakende Analitiği</h3>
+              <p className="text-slate-400 leading-relaxed">
+                Mağazanızın performansını verilerle ölçün. Hassas kişi sayma, sıcaklık/ısı haritası (heatmap) ve reyon bazlı müşteri odak tespiti ile mağaza içi davranışları analiz edin.
+              </p>
             </div>
 
-            <ArrowRight className="hidden md:block text-slate-600 w-8 h-8" />
-
-            {/* Step 2 */}
-            <div className="flex flex-col items-center text-center p-6 bg-slate-800/40 rounded-2xl border border-white/5 w-full md:w-1/5 shadow-lg">
-              <div className="w-14 h-14 rounded-full bg-slate-700/50 flex items-center justify-center mb-4 text-indigo-400">
-                <Network size={26} />
+            {/* Mağaza Güvenliği */}
+            <div className="group p-8 rounded-3xl bg-slate-900 border border-white/5 hover:border-indigo-500/30 transition-all hover:bg-slate-800/80">
+              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6">
+                <Eye className="w-7 h-7 text-indigo-400" />
               </div>
-              <h4 className="text-white font-medium mb-2">Tünelleme</h4>
-              <p className="text-xs text-slate-400">Cloudflare WSS aktarımı</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Mağaza Güvenliği</h3>
+              <p className="text-slate-400 leading-relaxed">
+                Güvenlik kameralarınızı proaktif bir bekçiye dönüştürün. Kasa işlem analizleri, anomali tespiti ve eylem tanıma (Action Recognition) ile hırsızlık vakalarını anında önleyin.
+              </p>
             </div>
 
-            <ArrowRight className="hidden md:block text-slate-600 w-8 h-8" />
-
-            {/* Step 3 */}
-            <div className="flex flex-col items-center text-center p-6 bg-slate-800/40 rounded-2xl border border-purple-500/30 w-full md:w-1/5 shadow-[0_0_30px_rgba(139,92,246,0.15)] relative">
-              <div className="absolute -inset-[1px] bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl opacity-20 blur-sm"></div>
-              <div className="w-14 h-14 rounded-full bg-purple-500/20 flex items-center justify-center mb-4 text-purple-400 shadow-[0_0_15px_rgba(139,92,246,0.3)]">
-                <Cpu size={26} />
+            {/* Akıllı Şehir & Trafik */}
+            <div className="group p-8 rounded-3xl bg-slate-900 border border-white/5 hover:border-cyan-500/30 transition-all hover:bg-slate-800/80">
+              <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center mb-6">
+                <Car className="w-7 h-7 text-cyan-400" />
               </div>
-              <h4 className="text-white font-medium mb-2">Alaf Plate AI</h4>
-              <p className="text-xs text-slate-400">Yapay Zeka Motoru</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Akıllı Şehir & Trafik</h3>
+              <p className="text-slate-400 leading-relaxed">
+                Milisaniyelik ALPR (Otomatik Plaka Tanıma Sistemi). Araç marka, model, renk ve hız ihlal tespiti. <span className="text-cyan-400 font-medium">visionapi.alafteknoloji.com</span> altyapısıyla sıfır gecikmeli veri akışı.
+              </p>
             </div>
 
-            <ArrowRight className="hidden md:block text-slate-600 w-8 h-8" />
-
-            {/* Step 4 */}
-            <div className="flex flex-col items-center text-center p-6 bg-slate-800/40 rounded-2xl border border-white/5 w-full md:w-1/5 shadow-lg">
-              <div className="w-14 h-14 rounded-full bg-slate-700/50 flex items-center justify-center mb-4 text-pink-400">
-                <MonitorSmartphone size={26} />
+            {/* Endüstriyel Tesisler */}
+            <div className="group p-8 rounded-3xl bg-slate-900 border border-white/5 hover:border-orange-500/30 transition-all hover:bg-slate-800/80">
+              <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center mb-6">
+                <Factory className="w-7 h-7 text-orange-400" />
               </div>
-              <h4 className="text-white font-medium mb-2">Dashboard</h4>
-              <p className="text-xs text-slate-400">Canlı sonuç gösterimi</p>
+              <h3 className="text-2xl font-bold text-white mb-3">Endüstriyel Tesisler</h3>
+              <p className="text-slate-400 leading-relaxed">
+                İş güvenliğini şansa bırakmayın. Baret/yelek ihlalleri, yetkisiz tehlikeli alan girişleri, makine başı personel takibi ve acil durum algılama sistemleri.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/5 mt-auto">
-        <div className="container mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Logo className="w-6 h-6 grayscale opacity-50" />
-            <span className="text-slate-500 text-sm font-medium">Alaf Plate</span>
+      {/* --- 3. NEDEN ALAF VISION? (EDGE COMPUTING) --- */}
+      <section id="edge-ai" className="relative z-10 py-24 border-y border-white/5 overflow-hidden">
+        {/* Subtle background gradient for this section */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-blue-950/10 to-slate-950 pointer-events-none" />
+        
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Neden Alaf Vision?</h2>
+            <p className="text-blue-400 font-medium text-lg mb-2">Merkezi Değil, Uç Nokta (Edge) Mimarisi</p>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              Veriyi üretildiği yerde, anında işliyoruz. Buluta devasa videolar göndermek yerine sadece sonuçları iletiyoruz.
+            </p>
           </div>
-          <p className="text-slate-500 text-sm">
-            &copy; {new Date().getFullYear()} Alaf Teknoloji. Tüm hakları saklıdır.
-          </p>
-          <div className="flex gap-6 text-sm font-medium text-slate-500">
-            <Link href="#" className="hover:text-white transition-colors">Gizlilik Politikası</Link>
-            <Link href="#" className="hover:text-white transition-colors">Kullanım Şartları</Link>
+
+          {/* 3 Step Flow */}
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 max-w-5xl mx-auto mb-20">
+            <div className="flex flex-col items-center text-center p-6 bg-slate-900 rounded-2xl border border-white/5 w-full md:w-1/3">
+              <Video className="w-12 h-12 text-slate-400 mb-4" />
+              <h4 className="text-white font-bold mb-2">1. Kamera Görüntüsü</h4>
+              <p className="text-sm text-slate-500">Mevcut IP kameralarınızdan gelen yüksek boyutlu ham video akışı.</p>
+            </div>
+            
+            <div className="hidden md:flex flex-col items-center text-blue-500">
+              <ArrowRight className="w-8 h-8" />
+            </div>
+
+            <div className="flex flex-col items-center text-center p-6 bg-blue-900/20 rounded-2xl border border-blue-500/30 w-full md:w-1/3 shadow-[0_0_30px_rgba(37,99,235,0.1)] relative">
+              <div className="absolute -top-3 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                Edge İşlem
+              </div>
+              <Cpu className="w-12 h-12 text-blue-400 mb-4" />
+              <h4 className="text-white font-bold mb-2">2. Yerel Alaf Düğümü</h4>
+              <p className="text-sm text-slate-400">Görüntü yereldeki sunucuda işlenir, anonimleştirilir ve anlamlandırılır.</p>
+            </div>
+
+            <div className="hidden md:flex flex-col items-center text-blue-500">
+              <ArrowRight className="w-8 h-8" />
+            </div>
+
+            <div className="flex flex-col items-center text-center p-6 bg-slate-900 rounded-2xl border border-white/5 w-full md:w-1/3">
+              <FileJson className="w-12 h-12 text-green-400 mb-4" />
+              <h4 className="text-white font-bold mb-2">3. Sadece Anlamlı Veri</h4>
+              <p className="text-sm text-slate-500">Merkeze veya buluta sadece KB boyutunda analiz verisi (JSON) gider.</p>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <div className="p-6">
+              <Lock className="w-8 h-8 text-blue-500 mb-4" />
+              <h4 className="text-white font-bold mb-2">KVKK ve GDPR Uyumu</h4>
+              <p className="text-sm text-slate-400">Ham görüntüler mağazadan/tesisten asla dışarı çıkmaz, %100 gizlilik sağlar.</p>
+            </div>
+            <div className="p-6">
+              <Activity className="w-8 h-8 text-cyan-500 mb-4" />
+              <h4 className="text-white font-bold mb-2">Sıfır İnternet Gecikmesi</h4>
+              <p className="text-sm text-slate-400">Bağlantı kopsa bile yerel sistem çalışmaya ve kaydetmeye devam eder.</p>
+            </div>
+            <div className="p-6">
+              <Network className="w-8 h-8 text-purple-500 mb-4" />
+              <h4 className="text-white font-bold mb-2">Bant Genişliği Tasarrufu</h4>
+              <p className="text-sm text-slate-400">Video aktarımı olmadığı için ağ altyapınızı yormaz, maliyetleri düşürür.</p>
+            </div>
+            <div className="p-6">
+              <Server className="w-8 h-8 text-orange-500 mb-4" />
+              <h4 className="text-white font-bold mb-2">Bare-Metal Gücü</h4>
+              <p className="text-sm text-slate-400">Sanallaştırmasız, doğrudan donanım üzerinde çalışarak maksimum FPS elde eder.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 4. GÜVENİLİRLİK (TRUST SECTION) --- */}
+      <section id="guvenilirlik" className="relative z-10 py-24 bg-slate-900/80">
+        <div className="container mx-auto px-6">
+          <div className="max-w-4xl mx-auto bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-10 md:p-14 border border-white/10 relative overflow-hidden shadow-2xl">
+            {/* Background Icon */}
+            <ShieldCheck className="absolute -right-10 -bottom-10 w-64 h-64 text-slate-800/50 pointer-events-none" />
+            
+            <div className="relative z-10 md:w-3/4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/50 border border-slate-700 text-slate-300 text-sm font-medium mb-6">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                Askeri Standartlarda Güvenilirlik
+              </div>
+              
+              <h3 className="text-3xl font-bold text-white mb-6 leading-tight">
+                Sıfır Hata Toleranslı <br />
+                Mühendislik Disiplini
+              </h3>
+              
+              <p className="text-lg text-slate-400 leading-relaxed mb-8">
+                Savunma sanayi projelerinde ve test altyapılarında edindiğimiz katı mühendislik prensiplerini, ticari ürünlerimize eksiksiz aktarıyoruz. 
+                <strong className="text-slate-200 font-semibold"> 7/24 kesintisiz</strong> çalışan, donanım kaynaklarını en verimli kullanan ve dış müdahalelere tamamen kapalı 
+                <strong className="text-slate-200 font-semibold"> (Air-Gapped)</strong> sistemler inşa ediyoruz.
+              </p>
+              
+              <div className="flex items-center gap-4 text-sm font-medium text-slate-300">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Air-Gapped Uyumlu
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  %99.9 Uptime
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- 5. MEGA FOOTER --- */}
+      <footer className="relative z-10 bg-slate-950 border-t border-white/10 pt-20 pb-10">
+        <div className="container mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+            
+            {/* Sütun 1: Marka */}
+            <div className="flex flex-col gap-6">
+              <div className="flex items-center gap-3">
+                <Logo className="w-8 h-8" />
+                <span className="text-xl font-bold tracking-tight text-white">
+                  Alaf Vision
+                </span>
+              </div>
+              <p className="text-slate-400 text-sm leading-relaxed">
+                Yapay zeka ve görüntü işleme teknolojileriyle geleceğin otonom ve akıllı sistemlerini inşa eden teknoloji partneriniz.
+              </p>
+            </div>
+
+            {/* Sütun 2: Çözümler */}
+            <div>
+              <h4 className="text-white font-bold mb-6">Çözümler</h4>
+              <ul className="flex flex-col gap-4 text-sm text-slate-400">
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Perakende Analitiği</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Trafik ve ALPR Sistemleri</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Endüstriyel İş Güvenliği</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Anomali ve Tehdit Tespiti</a></li>
+              </ul>
+            </div>
+
+            {/* Sütun 3: Teknoloji */}
+            <div>
+              <h4 className="text-white font-bold mb-6">Teknoloji</h4>
+              <ul className="flex flex-col gap-4 text-sm text-slate-400">
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Edge AI Mimarisi</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">Bare-Metal Performans</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">CGO Entegrasyonları</a></li>
+                <li><a href="#" className="hover:text-blue-400 transition-colors">NVIDIA TensorRT Hızlandırma</a></li>
+              </ul>
+            </div>
+
+            {/* Sütun 4: İletişim */}
+            <div>
+              <h4 className="text-white font-bold mb-6">Bize Ulaşın</h4>
+              <ul className="flex flex-col gap-4 text-sm text-slate-400">
+                <li>info@alafteknoloji.com</li>
+                <li>Üniversiteler Mah. İhsan Doğramacı Bulvarı</li>
+                <li>ODTÜ Teknokent Bilişim İnovasyon Merkezi</li>
+                <li>Çankaya / Ankara</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-slate-500 text-sm">
+              &copy; {new Date().getFullYear()} Alaf Teknoloji. Tüm hakları saklıdır.
+            </p>
+            <div className="flex gap-6 text-sm font-medium text-slate-500">
+              <a href="#" className="hover:text-white transition-colors">Gizlilik Politikası</a>
+              <a href="#" className="hover:text-white transition-colors">KVKK Aydınlatma Metni</a>
+            </div>
           </div>
         </div>
       </footer>

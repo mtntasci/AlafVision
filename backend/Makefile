@@ -1,10 +1,10 @@
 .PHONY: build run clean
 
 build:
-	go build -o alafplate-backend
+	go build -o alafvision-backend
 
 run: build
-	./alafplate-backend
+	./alafvision-backend
 
 clean:
-	rm -f alafplate-backend
+	rm -f alafvision-backend

@@ -1,12 +1,12 @@
-# Alaf Plate (Akıllı Görüntü Analizi Sistemi)
+# Alaf Vision (Akıllı Görüntü Analizi Sistemi)
 
-**Alaf Plate**, kameralardan alınan video akışları üzerinde özelleşmiş aramalar ve analizler yapabilen yüksek performanslı bir yapay zeka sistemidir.
+**Alaf Vision**, kameralardan alınan video akışları üzerinde özelleşmiş aramalar ve analizler yapabilen yüksek performanslı bir yapay zeka sistemidir.
 
 Şu anda demo aşamasında **Plaka, Araç, Marka ve Model Tanıma** işlemlerini başarıyla gerçekleştirirken, mimarisi gereği çok daha geniş bir vizyona hizmet edecek şekilde tasarlanmıştır.
 
 ## 🌟 Vizyon ve Gelecek Özellikler
 
-Alaf Plate, standart bir ALPR (Otomatik Plaka Tanıma) sisteminden çok daha fazlasıdır. Sistem, yakın gelecekte aşağıdaki hizmetleri sunabilecek kapasitede geliştirilmektedir:
+Alaf Vision, standart bir ALPR (Otomatik Plaka Tanıma) sisteminden çok daha fazlasıdır. Sistem, yakın gelecekte aşağıdaki hizmetleri sunabilecek kapasitede geliştirilmektedir:
 
 - **Çoklu Kamera Entegrasyonu:** Farklı noktalardaki kameraların tek merkezden eş zamanlı analizi.
 - **Yüz Tanıma ve Kişi Sayma:** Etkinlik alanları, giriş/çıkış noktaları için yüksek doğruluklu biyometrik analiz.

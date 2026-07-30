@@ -14,14 +14,14 @@ export default function Dashboard() {
   const [isStreaming, setIsStreaming] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("alafplate_token");
+    const token = localStorage.getItem("alafvision_token");
     if (!token) {
       router.push("/login");
       return;
     }
 
     // Initialize WebSocket
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://plateapi.alafteknoloji.com/stream";
+    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://visionapi.alafteknoloji.com/stream";
     const socket = new WebSocket(`${socketUrl}?token=${token}`);
 
     socket.onopen = () => {
@@ -110,7 +110,7 @@ export default function Dashboard() {
   }, [ws]);
 
   const handleLogout = () => {
-    localStorage.removeItem("alafplate_token");
+    localStorage.removeItem("alafvision_token");
     router.push("/login");
   };
 
@@ -120,7 +120,7 @@ export default function Dashboard() {
       <header className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center p-4 bg-gradient-to-b from-slate-950/80 to-transparent">
         <div className="flex items-center gap-2 text-white font-bold text-xl">
           <Camera className="text-blue-500" />
-          AlafPlate
+          AlafVision
         </div>
         <button
           onClick={handleLogout}

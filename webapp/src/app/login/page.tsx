@@ -14,7 +14,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (username === "admin" && password === "admin") {
       // Use the hardcoded token that backend expects
-      localStorage.setItem("alafplate_token", "admin_token_123");
+      localStorage.setItem("alafvision_token", "admin_token_123");
       router.push("/dashboard");
     } else {
       setError("Invalid username or password");
@@ -32,7 +32,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">AlafPlate</h1>
+            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">AlafVision</h1>
             <p className="text-slate-400">Sign in to ALPR Dashboard</p>
           </div>
 
