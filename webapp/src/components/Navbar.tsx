@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 // Alaf Vision Logo Component
 export const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
@@ -18,9 +17,6 @@ export const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
 );
 
 export function Navbar() {
-  const pathname = usePathname();
-  const isHome = pathname === "/";
-
   return (
     <nav className="relative z-50 w-full border-b border-border-subtle bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
@@ -30,22 +26,6 @@ export function Navbar() {
             Alaf <span className="text-accent">Vision</span>
           </span>
         </Link>
-        
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-secondary-text">
-          {isHome ? (
-            <>
-              <a href="#cozumler" className="hover:text-primary-text transition-colors">Çözümler</a>
-              <a href="#edge-ai" className="hover:text-primary-text transition-colors">Edge AI</a>
-              <a href="#guvenilirlik" className="hover:text-primary-text transition-colors">Güvenilirlik</a>
-            </>
-          ) : (
-            <>
-              <Link href="/#cozumler" className="hover:text-primary-text transition-colors">Çözümler</Link>
-              <Link href="/#edge-ai" className="hover:text-primary-text transition-colors">Edge AI</Link>
-              <Link href="/#guvenilirlik" className="hover:text-primary-text transition-colors">Güvenilirlik</Link>
-            </>
-          )}
-        </div>
         
         <Link 
           href="/login" 
