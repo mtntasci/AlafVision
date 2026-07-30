@@ -114,12 +114,12 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden font-sans">
       
       {/* Background Effects matching AGENTS.md */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        <div className="absolute top-[10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-blue-900/10 blur-[120px]" />
-        <div className="absolute bottom-[10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/10 blur-[120px]" />
+        
+        
         
         {/* Animated Grid */}
         <div 
@@ -132,18 +132,18 @@ export default function Dashboard() {
       </div>
 
       {/* Header (Navbar Rule) */}
-      <header className="absolute top-0 left-0 right-0 z-30 flex justify-between items-center px-6 py-4 bg-slate-950/80 backdrop-blur-xl border-b border-white/5">
+      <header className="absolute top-0 left-0 right-0 z-30 flex justify-between items-center px-6 py-4 bg-background backdrop-blur-xl border-b border-border-subtle">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-            <Camera className="w-5 h-5 text-blue-400" />
+          <div className="w-10 h-10 rounded-xl bg-accent-soft flex items-center justify-center border border-border-subtle">
+            <Camera className="w-5 h-5 text-accent" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">
-            Alaf <span className="text-blue-500">Vision</span>
+          <span className="text-xl font-bold tracking-tight text-primary-text">
+            Alaf <span className="text-accent">Vision</span>
           </span>
-          <span className="hidden md:inline-flex items-center gap-1.5 ml-4 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wider">
+          <span className="hidden md:inline-flex items-center gap-1.5 ml-4 px-3 py-1 rounded-full bg-accent-soft border border-border-subtle text-accent text-xs font-semibold uppercase tracking-wider">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-soft"></span>
             </span>
             Canlı Akış
           </span>
@@ -152,22 +152,22 @@ export default function Dashboard() {
         {/* Secondary Button Rule */}
         <button
           onClick={handleLogout}
-          className="group flex items-center gap-2 px-4 py-2 bg-slate-800/50 text-white border border-white/10 rounded-lg hover:bg-slate-800 transition-all font-medium text-sm"
+          className="group flex items-center gap-2 px-4 py-2 bg-surface-2 text-primary-text border border-border-subtle rounded-lg hover:bg-surface-2 transition-all font-medium text-sm"
         >
-          <LogOut size={16} className="text-slate-400 group-hover:text-white transition-colors" />
+          <LogOut size={16} className="text-secondary-text group-hover:text-primary-text transition-colors" />
           Çıkış
         </button>
       </header>
 
       {/* Camera View */}
-      <main className="flex-1 relative bg-slate-950 flex items-center justify-center pt-20 pb-4 px-4 z-10">
-        <div className="w-full h-full max-h-[60vh] max-w-5xl mx-auto bg-slate-900 border border-white/5 rounded-3xl overflow-hidden shadow-2xl relative">
+      <main className="flex-1 relative bg-background flex items-center justify-center pt-20 pb-4 px-4 z-10">
+        <div className="w-full h-full max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl relative">
           {!isStreaming && (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-500 z-10 flex-col gap-4 bg-slate-900/80 backdrop-blur-sm">
-              <div className="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                <Video className="w-8 h-8 text-blue-400 animate-pulse" />
+            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
+              <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
+                <Video className="w-8 h-8 text-accent animate-pulse" />
               </div>
-              <p className="font-medium text-slate-400">Kamera başlatılıyor...</p>
+              <p className="font-medium text-secondary-text">Kamera başlatılıyor...</p>
             </div>
           )}
           <video
@@ -180,7 +180,7 @@ export default function Dashboard() {
           <canvas ref={canvasRef} className="hidden" />
           
           {/* Subtle overlay to make it fit dark theme better */}
-          <div className="absolute inset-0 border-4 border-slate-950/20 rounded-3xl pointer-events-none" />
+          
         </div>
       </main>
 

@@ -22,12 +22,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4 selection:bg-blue-500/30 overflow-hidden relative">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 selection:bg-accent-soft/30 overflow-hidden relative">
       
       {/* Background Effects matching AGENTS.md */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-blue-900/10 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-900/10 blur-[120px]" />
+        
+        
         
         {/* Animated Grid */}
         <div 
@@ -40,23 +40,23 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Kartlar ve Bölmeler Rule: bg-slate-900, border-white/5, hover:border-blue-500/30 (if interactive, but here it's static) */}
-        <div className="bg-slate-900 border border-white/5 rounded-3xl p-10 shadow-2xl backdrop-blur-xl">
+        {/* Kartlar ve Bölmeler Rule: bg-surface-1, border-border-subtle, hover:border-border-subtle (if interactive, but here it's static) */}
+        <div className="bg-surface-1 border border-border-subtle rounded-3xl p-10 shadow-2xl backdrop-blur-xl">
           <div className="text-center mb-10 flex flex-col items-center">
             {/* Logo placeholder icon styled per AGENTS.md */}
-            <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-500/20">
-              <Lock className="w-7 h-7 text-blue-400" />
+            <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
+              <Lock className="w-7 h-7 text-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
-              Alaf <span className="text-blue-500">Vision</span>
+            <h1 className="text-3xl font-bold text-primary-text mb-2 tracking-tight">
+              Alaf <span className="text-accent">Vision</span>
             </h1>
-            <p className="text-slate-400">Yönetim Paneli Girişi</p>
+            <p className="text-secondary-text">Yönetim Paneli Girişi</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-secondary-text group-focus-within:text-accent transition-colors">
                   <User size={20} />
                 </div>
                 <input
@@ -64,12 +64,12 @@ export default function LoginPage() {
                   placeholder="Kullanıcı Adı"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-950/50 border border-white/5 rounded-xl text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-slate-950"
+                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-xl text-primary-text placeholder-secondary-text focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent transition-all hover:bg-background"
                 />
               </div>
 
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500 group-focus-within:text-blue-400 transition-colors">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-secondary-text group-focus-within:text-accent transition-colors">
                   <Lock size={20} />
                 </div>
                 <input
@@ -77,13 +77,13 @@ export default function LoginPage() {
                   placeholder="Şifre"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-slate-950/50 border border-white/5 rounded-xl text-slate-300 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all hover:bg-slate-950"
+                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-xl text-primary-text placeholder-secondary-text focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent transition-all hover:bg-background"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="text-blue-400 text-sm text-center font-medium bg-blue-500/10 py-3 rounded-xl border border-blue-500/20">
+              <div className="text-accent text-sm text-center font-medium bg-accent-soft py-3 rounded-xl border border-border-subtle">
                 {error}
               </div>
             )}
@@ -91,7 +91,7 @@ export default function LoginPage() {
             {/* Primary Button Rule */}
             <button
               type="submit"
-              className="group w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300 active:scale-[0.98]"
+              className="group w-full py-3.5 px-4 bg-accent hover:bg-accent-soft text-primary-text rounded-xl font-semibold flex items-center justify-center gap-2 shadow-xl transition-all duration-300 active:scale-[0.98]"
             >
               Giriş Yap
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -99,7 +99,7 @@ export default function LoginPage() {
           </form>
         </div>
         
-        <p className="text-center text-slate-500 text-sm mt-8">
+        <p className="text-center text-secondary-text text-sm mt-8">
           Alaf Teknoloji &copy; {new Date().getFullYear()}
         </p>
       </div>
