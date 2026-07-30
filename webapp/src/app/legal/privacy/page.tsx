@@ -4,11 +4,6 @@ import { Footer } from "../../../components/Footer";
 export default function PrivacyPolicyPage() {
   return (
     <div className="min-h-screen bg-background text-primary-text selection:bg-accent-soft/30 font-sans overflow-x-hidden flex flex-col">
-      {/* Background Effects */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        
-        
-
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col items-center py-20 px-4">

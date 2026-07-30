@@ -16,3 +16,6 @@
 4. UI & Davranış (UX) Kuralları:
 - Aksini belirtmediğim sürece Popup/Modal KULLANILMAYACAKTIR.
 - Her türlü yeni işlem/form/görünüm için yeni sayfa (route) yapılarak oluşturulacaktır.
+
+5. Geliştirme Süreci Kuralları:
+- Kesinlikle hatasız bir build (`npm run build`) almadan "tamamlandı" demeyin. Yaptığınız değişikliklerin projeyi bozmadığından emin olmak için her büyük güncelleme sonrasında build alıp doğrulayın.
