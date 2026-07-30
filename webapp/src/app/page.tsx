@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Navbar } from "../components/Navbar";
+import { Footer } from "../components/Footer";
 import { 
   ArrowRight, 
   ChevronDown, 
@@ -16,19 +18,7 @@ import {
   Video
 } from "lucide-react";
 
-// Alaf Vision Logo (Kurumsal, teknolojik ve güven veren bir tasarım)
-const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 100 100"
-    className={className}
-    fill="none"
-  >
-    <rect x="20" y="20" width="60" height="60" rx="14" className="stroke-blue-600" strokeWidth="6" />
-    <circle cx="50" cy="50" r="16" className="fill-blue-500" />
-    <path d="M50 20 L50 34 M50 80 L50 66 M20 50 L34 50 M80 50 L66 50" className="stroke-blue-400" strokeWidth="4" strokeLinecap="round" />
-  </svg>
-);
+// Logo removed, imported in Navbar/Footer where needed
 
 export default function Home() {
   return (
@@ -48,27 +38,7 @@ export default function Home() {
       </div>
 
       {/* --- NAVBAR --- */}
-      <nav className="relative z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Logo className="w-9 h-9" />
-            <span className="text-2xl font-bold tracking-tight text-white">
-              Alaf <span className="text-blue-500">Vision</span>
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400">
-            <a href="#cozumler" className="hover:text-white transition-colors">Çözümler</a>
-            <a href="#edge-ai" className="hover:text-white transition-colors">Edge AI</a>
-            <a href="#guvenilirlik" className="hover:text-white transition-colors">Güvenilirlik</a>
-          </div>
-          <Link 
-            href="https://vision.alafteknoloji.com/login" 
-            className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors shadow-[0_0_15px_rgba(37,99,235,0.3)]"
-          >
-            Müşteri Girişi
-          </Link>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* --- 1. HERO SECTION --- */}
       <main className="relative z-10 flex flex-col items-center justify-center min-h-[90vh] px-4 text-center pb-20 pt-10">
@@ -279,68 +249,7 @@ export default function Home() {
       </section>
 
       {/* --- 5. MEGA FOOTER --- */}
-      <footer className="relative z-10 bg-slate-950 border-t border-white/10 pt-20 pb-10">
-        <div className="container mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-            
-            {/* Sütun 1: Marka */}
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center gap-3">
-                <Logo className="w-8 h-8" />
-                <span className="text-xl font-bold tracking-tight text-white">
-                  Alaf Vision
-                </span>
-              </div>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Yapay zeka ve görüntü işleme teknolojileriyle geleceğin otonom ve akıllı sistemlerini inşa eden teknoloji partneriniz.
-              </p>
-            </div>
-
-            {/* Sütun 2: Çözümler */}
-            <div>
-              <h4 className="text-white font-bold mb-6">Çözümler</h4>
-              <ul className="flex flex-col gap-4 text-sm text-slate-400">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Perakende Analitiği</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Trafik ve ALPR Sistemleri</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Endüstriyel İş Güvenliği</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Anomali ve Tehdit Tespiti</a></li>
-              </ul>
-            </div>
-
-            {/* Sütun 3: Teknoloji */}
-            <div>
-              <h4 className="text-white font-bold mb-6">Teknoloji</h4>
-              <ul className="flex flex-col gap-4 text-sm text-slate-400">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Edge AI Mimarisi</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Bare-Metal Performans</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">CGO Entegrasyonları</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">NVIDIA TensorRT Hızlandırma</a></li>
-              </ul>
-            </div>
-
-            {/* Sütun 4: İletişim */}
-            <div>
-              <h4 className="text-white font-bold mb-6">Bize Ulaşın</h4>
-              <ul className="flex flex-col gap-4 text-sm text-slate-400">
-                <li>info@alafteknoloji.com</li>
-                <li>Üniversiteler Mah. İhsan Doğramacı Bulvarı</li>
-                <li>ODTÜ Teknokent Bilişim İnovasyon Merkezi</li>
-                <li>Çankaya / Ankara</li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-slate-500 text-sm">
-              &copy; {new Date().getFullYear()} Alaf Teknoloji. Tüm hakları saklıdır.
-            </p>
-            <div className="flex gap-6 text-sm font-medium text-slate-500">
-              <a href="#" className="hover:text-white transition-colors">Gizlilik Politikası</a>
-              <a href="#" className="hover:text-white transition-colors">KVKK Aydınlatma Metni</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
