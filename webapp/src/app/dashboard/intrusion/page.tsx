@@ -39,6 +39,8 @@ export default function IntrusionDashboard() {
   const seenHumansRef = useRef<Set<string>>(new Set());
   const triggeredAnomaliesRef = useRef<Set<string>>(new Set());
   const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const recognitionAttemptsRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     // Face API Modellerini Yükle
@@ -116,29 +118,34 @@ export default function IntrusionDashboard() {
             isNewPerson = true;
           }
 
+          const isKnown = knownIdsRef.current.has(res.text);
+          const attempts = recognitionAttemptsRef.current[res.text] || 0;
+          const shouldAttemptRecognition = !isKnown && attempts < 5;
+
           if (videoRef.current) {
             const video = videoRef.current;
             const coords = getBoxCoords(res.box);
 
             if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
-              const cropCanvas = document.createElement("canvas");
-              const padding = 20;
+              // --- 1. Yüz Tanıma (En fazla 5 kere dener) ---
+              if (shouldAttemptRecognition) {
+                const cropCanvas = document.createElement("canvas");
+                const padding = 20;
 
-              const cropX = Math.max(0, coords.x - padding);
-              const cropY = Math.max(0, coords.y - padding);
-              const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-              const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+                const cropX = Math.max(0, coords.x - padding);
+                const cropY = Math.max(0, coords.y - padding);
+                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
 
-              cropCanvas.width = cropW;
-              cropCanvas.height = cropH;
-              const cropCtx = cropCanvas.getContext("2d");
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                const cropCtx = cropCanvas.getContext("2d");
 
-              if (cropCtx) {
-                cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
-
-                // --- 1. Yüz Tanıma (Yeni Kişi Kameraya Girdiğinde) ---
-                if (isNewPerson) {
+                if (cropCtx) {
+                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                  
+                  recognitionAttemptsRef.current[res.text] = attempts + 1;
+                  
                   setTimeout(async () => {
                     try {
                       const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
@@ -150,7 +157,8 @@ export default function IntrusionDashboard() {
                             bestMatch = { name: known.name, customId: known.customId || "", distance };
                           }
                         }
-                        if (bestMatch.distance < 0.55) {
+                        if (bestMatch.distance < 0.58) {
+                          knownIdsRef.current.add(res.text);
                           const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
                           setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
                         }
@@ -160,21 +168,37 @@ export default function IntrusionDashboard() {
                     }
                   }, 50);
                 }
+              }
 
-                // --- 2. Yasak Bölge İhlali (Intrusion) ---
-                const zoneX = video.videoWidth * 0.7; // Right 30%
-                const boxRight = coords.x + coords.w;
-                const overlapW = Math.max(0, Math.min(boxRight, video.videoWidth) - Math.max(coords.x, zoneX));
-                const overlapRatio = overlapW / coords.w;
+              // --- 2. Yasak Bölge İhlali (Intrusion) ---
+              const zoneX = video.videoWidth * 0.7; // Right 30%
+              const boxRight = coords.x + coords.w;
+              const overlapW = Math.max(0, Math.min(boxRight, video.videoWidth) - Math.max(coords.x, zoneX));
+              const overlapRatio = overlapW / coords.w;
 
-                let anomalyTriggered = false;
-                if (overlapRatio >= 0.51) {
-                  anomalyTriggered = true;
-                }
+              let anomalyTriggered = false;
+              if (overlapRatio >= 0.51) {
+                anomalyTriggered = true;
+              }
 
-                const anomalyKey = `${res.text}_ZONE_BREACH`;
-                if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
-                  triggeredAnomaliesRef.current.add(anomalyKey);
+              const anomalyKey = `${res.text}_ZONE_BREACH`;
+              if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
+                triggeredAnomaliesRef.current.add(anomalyKey);
+
+                // İhlal anında snapshot al
+                const cropCanvas = document.createElement("canvas");
+                const padding = 20;
+                const cropX = Math.max(0, coords.x - padding);
+                const cropY = Math.max(0, coords.y - padding);
+                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                const cropCtx = cropCanvas.getContext("2d");
+
+                if (cropCtx) {
+                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                  const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
 
                   setCapturedSnapshots(prev => [{
                     id: res.text,
@@ -205,6 +229,8 @@ export default function IntrusionDashboard() {
       socket.close();
       seenHumansRef.current.clear();
       triggeredAnomaliesRef.current.clear();
+      knownIdsRef.current.clear();
+      recognitionAttemptsRef.current = {};
     };
   }, [router]);
 

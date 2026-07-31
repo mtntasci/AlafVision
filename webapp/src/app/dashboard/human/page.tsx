@@ -54,6 +54,8 @@ export default function HumanDashboard() {
   
   const seenHumansRef = useRef<Set<string>>(new Set());
   const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const recognitionAttemptsRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     // Face API Modellerini Yükle
@@ -123,15 +125,23 @@ export default function HumanDashboard() {
         let hasNew = false;
         const now = Date.now();
         filteredResults.forEach((res) => {
+          let isNewPerson = false;
           if (!seenHumansRef.current.has(res.text)) {
             seenHumansRef.current.add(res.text);
             hasNew = true;
+            isNewPerson = true;
+          }
 
-            if (videoRef.current) {
-              const video = videoRef.current;
-              const coords = getBoxCoords(res.box);
-              
-              if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+          const isKnown = knownIdsRef.current.has(res.text);
+          const attempts = recognitionAttemptsRef.current[res.text] || 0;
+          const shouldAttemptRecognition = !isKnown && attempts < 5;
+
+          if (videoRef.current) {
+            const video = videoRef.current;
+            const coords = getBoxCoords(res.box);
+            
+            if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+              if (isNewPerson || shouldAttemptRecognition) {
                 const cropCanvas = document.createElement("canvas");
                 const padding = 20;
 
@@ -146,37 +156,42 @@ export default function HumanDashboard() {
 
                 if (cropCtx) {
                   cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                  const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+                  
+                  if (isNewPerson) {
+                    const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+                    setCapturedSnapshots(prev => [{
+                      id: res.text,
+                      src: dataUrl,
+                      timestamp: now,
+                    }, ...prev]);
+                  }
 
-                  setCapturedSnapshots(prev => [{
-                    id: res.text,
-                    src: dataUrl,
-                    timestamp: now,
-                  }, ...prev]);
-
-                  // --- Yüz Tanıma (Sadece ilk görüldüğünde 1 kere çalışır) ---
-                  setTimeout(async () => {
-                    try {
-                      const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
-                      if (detection && knownFacesRef.current.length > 0) {
-                        let bestMatch = { name: "", customId: "", distance: 1.0 };
-                        for (const known of knownFacesRef.current) {
-                          const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
-                          if (distance < bestMatch.distance) {
-                            bestMatch = { name: known.name, customId: known.customId || "", distance };
+                  if (shouldAttemptRecognition) {
+                    recognitionAttemptsRef.current[res.text] = attempts + 1;
+                    
+                    setTimeout(async () => {
+                      try {
+                        const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
+                        if (detection && knownFacesRef.current.length > 0) {
+                          let bestMatch = { name: "", customId: "", distance: 1.0 };
+                          for (const known of knownFacesRef.current) {
+                            const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
+                            if (distance < bestMatch.distance) {
+                              bestMatch = { name: known.name, customId: known.customId || "", distance };
+                            }
+                          }
+                          // Eşik değeri: 0.58 altı (Telefon kamerası açıları için esnekletildi)
+                          if (bestMatch.distance < 0.58) {
+                            knownIdsRef.current.add(res.text);
+                            const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                            setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
                           }
                         }
-                        // Eşik değeri: 0.55 altı güvenilir kabul edilir
-                        if (bestMatch.distance < 0.55) {
-                          const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
-                          setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
-                        }
+                      } catch (e) {
+                        console.error("Face matching error:", e);
                       }
-                    } catch (e) {
-                      console.error("Face matching error:", e);
-                    }
-                  }, 50);
-                  // -----------------------------------------------------------
+                    }, 50);
+                  }
                 }
               }
             }
@@ -211,6 +226,8 @@ export default function HumanDashboard() {
     return () => {
       socket.close();
       seenHumansRef.current.clear();
+      knownIdsRef.current.clear();
+      recognitionAttemptsRef.current = {};
       setCapturedSnapshots([]);
     };
   }, [router]);
