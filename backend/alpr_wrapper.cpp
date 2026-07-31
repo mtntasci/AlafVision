@@ -14,7 +14,7 @@ extern "C" {
 int AlprInit() {
     // Initialize the engine with an empty JSON config or appropriate config
     // Example: {"debug_level": "info"}
-    UltAlprSdkResult result = UltAlprSdkEngine::init("{\"debug_level\": \"info\", \"car_noplate_detect_enabled\": false, \"iex_enabled\": true, \"openvino_enabled\": false, \"tensorrt_enabled\": true}");
+    UltAlprSdkResult result = UltAlprSdkEngine::init("{\"debug_level\": \"info\", \"car_noplate_detect_enabled\": false, \"iex_enabled\": true, \"openvino_enabled\": false, \"tensorrt_enabled\": true, \"detect_minscore\": 0.7, \"recogn_minscore\": 0.7}");
     if (result.isOK()) {
         return 0;
     }
