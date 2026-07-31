@@ -31,7 +31,7 @@ export default function StoreDashboard() {
   const [exitedCount, setExitedCount] = useState(0);
   
   // Geçiş takibi için önceki pozisyonlar
-  const previousPositionsRef = useRef<Map<string, number>>(new Map());
+  const previousPositionsRef = useRef(new Map<string, number>());
 
   useEffect(() => {
     const token = localStorage.getItem("alafvision_token");
