@@ -66,7 +66,7 @@ export default function Home() {
             href="https://vision.alafteknoloji.com/login" 
             className="group relative inline-flex items-center justify-center gap-2 bg-accent text-primary-text px-8 py-4 rounded-xl font-semibold text-lg hover:bg-accent-soft transition-all duration-300 w-full sm:w-auto shadow-xl hover:shadow-xl"
           >
-            Canlı Demo: Plaka ve Araç Tespiti
+            Canlı Demo
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <a 
