@@ -76,6 +76,8 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Sadece binary (video karesi) mesajları işle
 		if messageType == websocket.BinaryMessage {
+			log.Printf("[%s] Frame received, size: %d bytes\n", engine, len(message))
+			
 			cData := C.CBytes(message)
 			cSize := C.int(len(message))
 			
@@ -83,13 +85,20 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 
 			// Motora göre yönlendirme
 			if engine == "vehicle" {
+				log.Println("Sending frame to C++ ALPR...")
 				cResult = C.AlprProcessFrame(cData, cSize)
 			} else if engine == "human" {
+				log.Println("Sending frame to C++ Human Tracker...")
 				cResult = C.HumanTrackerProcessFrame(cData, cSize)
 			}
 			
 			if cResult != nil {
 				goResult := C.GoString(cResult)
+				if engine == "vehicle" {
+					log.Printf("C++ ALPR returned JSON: %s\n", goResult)
+				} else if engine == "human" {
+					log.Printf("C++ HumanTracker returned JSON: %s\n", goResult)
+				}
 				
 				if engine == "vehicle" {
 					C.AlprFreeResult(cResult)
