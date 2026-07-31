@@ -109,79 +109,80 @@ export default function IntrusionDashboard() {
         const now = Date.now();
 
         filteredResults.forEach((res) => {
+          let isNewPerson = false;
           if (!seenHumansRef.current.has(res.text)) {
             seenHumansRef.current.add(res.text);
             hasNew = true;
+            isNewPerson = true;
           }
-
-          let anomalyTriggered = false;
 
           if (videoRef.current) {
             const video = videoRef.current;
             const coords = getBoxCoords(res.box);
 
-            if (coords) {
-              const zoneX = video.videoWidth * 0.7; // Right 30%
-              const boxRight = coords.x + coords.w;
-              const overlapW = Math.max(0, Math.min(boxRight, video.videoWidth) - Math.max(coords.x, zoneX));
-              const overlapRatio = overlapW / coords.w;
+            if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+              const cropCanvas = document.createElement("canvas");
+              const padding = 20;
 
-              if (overlapRatio >= 0.51) {
-                anomalyTriggered = true;
-              }
+              const cropX = Math.max(0, coords.x - padding);
+              const cropY = Math.max(0, coords.y - padding);
+              const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+              const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
 
-              const anomalyKey = `${res.text}_ZONE_BREACH`;
-              if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
-                triggeredAnomaliesRef.current.add(anomalyKey);
+              cropCanvas.width = cropW;
+              cropCanvas.height = cropH;
+              const cropCtx = cropCanvas.getContext("2d");
 
-                if (video.videoWidth > 0 && video.videoHeight > 0) {
-                  const cropCanvas = document.createElement("canvas");
-                  const padding = 20;
+              if (cropCtx) {
+                cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
 
-                  const cropX = Math.max(0, coords.x - padding);
-                  const cropY = Math.max(0, coords.y - padding);
-                  const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-                  const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
-
-                  cropCanvas.width = cropW;
-                  cropCanvas.height = cropH;
-                  const cropCtx = cropCanvas.getContext("2d");
-
-                  if (cropCtx) {
-                    cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                    const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
-
-                    setCapturedSnapshots(prev => [{
-                      id: res.text,
-                      src: dataUrl,
-                      code: "ZONE_BREACH",
-                      message: "⚠️ YASAK BÖLGE İHLALİ",
-                      timestamp: now,
-                    }, ...prev]);
-
-                    // --- Yüz Tanıma ---
-                    setTimeout(async () => {
-                      try {
-                        const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
-                        if (detection && knownFacesRef.current.length > 0) {
-                          let bestMatch = { name: "", customId: "", distance: 1.0 };
-                          for (const known of knownFacesRef.current) {
-                            const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
-                            if (distance < bestMatch.distance) {
-                              bestMatch = { name: known.name, customId: known.customId || "", distance };
-                            }
-                          }
-                          if (bestMatch.distance < 0.55) {
-                            const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
-                            setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
+                // --- 1. Yüz Tanıma (Yeni Kişi Kameraya Girdiğinde) ---
+                if (isNewPerson) {
+                  setTimeout(async () => {
+                    try {
+                      const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
+                      if (detection && knownFacesRef.current.length > 0) {
+                        let bestMatch = { name: "", customId: "", distance: 1.0 };
+                        for (const known of knownFacesRef.current) {
+                          const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
+                          if (distance < bestMatch.distance) {
+                            bestMatch = { name: known.name, customId: known.customId || "", distance };
                           }
                         }
-                      } catch (e) {
-                        console.error("Face matching error:", e);
+                        if (bestMatch.distance < 0.55) {
+                          const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                          setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
+                        }
                       }
-                    }, 50);
-                    // ------------------
-                  }
+                    } catch (e) {
+                      console.error("Face matching error:", e);
+                    }
+                  }, 50);
+                }
+
+                // --- 2. Yasak Bölge İhlali (Intrusion) ---
+                const zoneX = video.videoWidth * 0.7; // Right 30%
+                const boxRight = coords.x + coords.w;
+                const overlapW = Math.max(0, Math.min(boxRight, video.videoWidth) - Math.max(coords.x, zoneX));
+                const overlapRatio = overlapW / coords.w;
+
+                let anomalyTriggered = false;
+                if (overlapRatio >= 0.51) {
+                  anomalyTriggered = true;
+                }
+
+                const anomalyKey = `${res.text}_ZONE_BREACH`;
+                if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
+                  triggeredAnomaliesRef.current.add(anomalyKey);
+
+                  setCapturedSnapshots(prev => [{
+                    id: res.text,
+                    src: dataUrl,
+                    code: "ZONE_BREACH",
+                    message: "⚠️ YASAK BÖLGE İHLALİ",
+                    timestamp: now,
+                  }, ...prev]);
                 }
               }
             }
