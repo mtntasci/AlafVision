@@ -30,6 +30,9 @@ export default function VehicleDashboard() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
 
+  // Compute unique plates
+  const uniquePlates = new Set(results.map(r => r.text).filter(t => t && t !== "UNKNOWN"));
+
   useEffect(() => {
     const token = localStorage.getItem("alafvision_token");
     if (!token) {
@@ -148,87 +151,96 @@ export default function VehicleDashboard() {
   }, [ws]);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden font-sans">
+    <div className="h-[100dvh] bg-background flex flex-col relative overflow-hidden font-sans">
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, backgroundSize: `40px 40px` }} />
       </div>
 
-      <header className="absolute top-0 left-0 right-0 z-30 flex justify-between items-center px-6 py-4 bg-background backdrop-blur-xl border-b border-border-subtle">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center border border-border-subtle hover:bg-surface-3 transition-colors cursor-pointer mr-2">
+      <header className="flex-none h-[64px] z-30 flex justify-between items-center px-4 bg-background border-b border-border-subtle">
+        <div className="flex items-center gap-2">
+          <Link href="/dashboard" className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center border border-border-subtle hover:bg-surface-3 transition-colors cursor-pointer mr-1">
             <ArrowLeft className="w-5 h-5 text-secondary-text" />
           </Link>
-          <span className="text-xl font-bold tracking-tight text-primary-text">
+          <span className="text-xl font-bold tracking-tight text-primary-text hidden sm:inline-block">
             Alaf <span className="text-accent">Vision</span>
           </span>
-          <span className="hidden md:inline-flex items-center gap-1.5 ml-4 px-3 py-1 rounded-full bg-accent-soft border border-border-subtle text-accent text-xs font-semibold uppercase tracking-wider">
+          <span className="flex items-center gap-1.5 ml-2 px-3 py-1 rounded-full bg-accent-soft border border-border-subtle text-accent text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
             Demo Araç Tanıma
           </span>
         </div>
       </header>
 
-      <main className="flex-1 relative bg-background flex flex-col items-center justify-center pt-24 pb-4 px-4 z-10">
-        <div className="relative w-full aspect-video min-h-[400px] max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl">
+      <div className="flex-none w-full max-w-3xl mx-auto px-4 pt-4 pb-2 z-10 flex flex-col gap-3">
+        <div className="relative w-full aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
           {!isStreaming && (
-            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
-              <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
-                <Video className="w-8 h-8 text-accent animate-pulse" />
-              </div>
-              <p className="font-medium text-secondary-text">Kamera başlatılıyor...</p>
-            </div>
-          )}
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-contain opacity-90 mix-blend-screen"
-            onLoadedMetadata={() => {
-              if (videoRef.current) {
-                setVideoDimensions({ width: videoRef.current.videoWidth, height: videoRef.current.videoHeight });
-                setIsStreaming(true);
-              }
-            }}
-          />
-          {isStreaming && (
-            <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`} preserveAspectRatio="xMidYMid meet">
-              {results.map((res) => {
-                const coords = getBoxCoords(res.box);
-                if (!coords || !videoRef.current) return null;
-
-                let finalX = coords.x;
-                const finalY = coords.y;
-                const finalW = coords.w;
-                const finalH = coords.h;
-
-                const style = window.getComputedStyle(videoRef.current);
-                const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
-                if (isMirrored) {
-                  finalX = (videoDimensions.width || 1) - finalX - finalW;
-                }
-
-                const hasLabel = Boolean(res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "");
-                const label = hasLabel ? res.text.toUpperCase() : "";
-
-                return (
-                  <g key={res.id}>
-                    <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke="currentColor" strokeWidth="4" rx="8" className="text-accent drop-shadow-md" />
-                    {hasLabel && (
-                      <>
-                        <rect x={finalX} y={finalY - 30} width={Math.max(label.length * 10 + 16, 60)} height="30" fill="currentColor" rx="4" className="text-accent drop-shadow-md" />
-                        <text x={finalX + 8} y={finalY - 10} fill="#ffffff" fontSize="16" fontWeight="bold" fontFamily="system-ui, sans-serif">{label}</text>
-                      </>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-          )}
-          <canvas ref={canvasRef} className="hidden" />
+             <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
+               <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
+                 <Video className="w-8 h-8 text-accent animate-pulse" />
+               </div>
+               <p className="font-medium text-secondary-text">Kamera başlatılıyor...</p>
+             </div>
+           )}
+           <video
+             ref={videoRef}
+             autoPlay
+             playsInline
+             muted
+             className="absolute inset-0 w-full h-full object-contain opacity-90 mix-blend-screen"
+             onLoadedMetadata={() => {
+               if (videoRef.current) {
+                 setVideoDimensions({ width: videoRef.current.videoWidth, height: videoRef.current.videoHeight });
+                 setIsStreaming(true);
+               }
+             }}
+           />
+           {isStreaming && (
+             <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`} preserveAspectRatio="xMidYMid meet">
+               {results.map((res) => {
+                 const coords = getBoxCoords(res.box);
+                 if (!coords || !videoRef.current) return null;
+                 let finalX = coords.x;
+                 const finalY = coords.y;
+                 const finalW = coords.w;
+                 const finalH = coords.h;
+                 const style = window.getComputedStyle(videoRef.current);
+                 const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
+                 if (isMirrored) {
+                   finalX = (videoDimensions.width || 1) - finalX - finalW;
+                 }
+                 const hasLabel = Boolean(res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "");
+                 const label = hasLabel ? res.text.toUpperCase() : "";
+                 return (
+                   <g key={res.id}>
+                     <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke="currentColor" strokeWidth="4" rx="8" className="text-accent drop-shadow-md" />
+                     {hasLabel && (
+                       <>
+                         <rect x={finalX} y={finalY - 30} width={Math.max(label.length * 10 + 16, 60)} height="30" fill="currentColor" rx="4" className="text-accent drop-shadow-md" />
+                         <text x={finalX + 8} y={finalY - 10} fill="#ffffff" fontSize="16" fontWeight="bold" fontFamily="system-ui, sans-serif">{label}</text>
+                       </>
+                     )}
+                   </g>
+                 );
+               })}
+             </svg>
+           )}
+           <canvas ref={canvasRef} className="hidden" />
         </div>
-      </main>
 
-      <div className="relative z-20 container mx-auto px-4 pb-4">
+        {/* Compact Counters for Mobile */}
+        <div className="w-full bg-surface-1 border border-border-subtle rounded-xl p-3 shadow-md flex justify-around items-center">
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-secondary-text tracking-wider">ANLIK TESPİT</span>
+            <span className="text-xl font-black text-primary-text">{results.length}</span>
+          </div>
+          <div className="h-8 w-px bg-border-subtle"></div>
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-bold text-secondary-text tracking-wider">BENZERSİZ ARAÇ</span>
+            <span className="text-xl font-black text-accent drop-shadow-sm">{uniquePlates.size}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 w-full max-w-3xl mx-auto px-4 pb-4 min-h-0 z-10">
         <PlateFeed results={results} />
       </div>
     </div>
