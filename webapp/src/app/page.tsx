@@ -51,7 +51,7 @@ export default function Home() {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-primary-text max-w-5xl mx-auto leading-[1.1]">
-          Yapay Zeka ile Görüntü İşlemenin <br className="hidden md:block" />
+          Yapay Zeka ile Görüntü İşlemenin <br />
           <span className="text-accent">
             Uç Noktası
           </span>
