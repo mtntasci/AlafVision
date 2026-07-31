@@ -68,9 +68,10 @@ export default function Dashboard() {
 
         const filteredResults: PlateResult[] = items
           .map((item) => {
+            const resolvedId = item.id || Date.now().toString() + Math.random().toString(36).substring(7);
             return {
-              id: item.id || Date.now().toString() + Math.random().toString(36).substring(7),
-              text: item.text || "UNKNOWN",
+              id: resolvedId,
+              text: mode === "human" ? resolvedId : (item.text || "UNKNOWN"),
               make: item.make || item.car?.make || "",
               model: item.model || item.car?.model || "",
               color: item.color || item.car?.color || "",
@@ -81,7 +82,7 @@ export default function Dashboard() {
           })
           .filter((res) => {
             if (mode === "human") {
-              return res.text && res.text !== "UNKNOWN";
+              return res.box && res.box.length > 0;
             }
 
             const makeLower = (res.make || "").trim().toLowerCase();
