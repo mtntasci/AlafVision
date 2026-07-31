@@ -9,6 +9,7 @@ package main
 import "C"
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strings"
@@ -77,6 +78,53 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 				// Free the C string and data
 				C.AlprFreeResult(cResult)
 				C.free(cData)
+
+				// Filter results by confidence (threshold = 70%)
+				var parsedData map[string]interface{}
+				if err := json.Unmarshal([]byte(goResult), &parsedData); err == nil {
+					hasValidDetections := true
+					
+					// Check if it's the ultimateALPR 'plates' array format
+					if platesRaw, ok := parsedData["plates"]; ok {
+						if plates, ok := platesRaw.([]interface{}); ok {
+							var filteredPlates []interface{}
+							for _, pRaw := range plates {
+								if p, ok := pRaw.(map[string]interface{}); ok {
+									conf := 0.0
+									if c, ok := p["confidence"].(float64); ok {
+										conf = c
+									}
+									// Only keep plates with confidence >= 70
+									if conf >= 70.0 {
+										filteredPlates = append(filteredPlates, p)
+									}
+								}
+							}
+							
+							parsedData["plates"] = filteredPlates
+							// If all plates were filtered out, don't send anything
+							if len(filteredPlates) == 0 {
+								hasValidDetections = false
+							}
+						}
+					} else {
+						// Fallback: If it's a flat object mock
+						if c, ok := parsedData["confidence"].(float64); ok {
+							if c < 70.0 {
+								hasValidDetections = false
+							}
+						}
+					}
+					
+					if !hasValidDetections {
+						continue // Skip sending this frame's result to frontend
+					}
+					
+					// Re-marshal the filtered data
+					if filteredBytes, err := json.Marshal(parsedData); err == nil {
+						goResult = string(filteredBytes)
+					}
+				}
 
 				// Send the JSON result back to the client
 				err = conn.WriteMessage(websocket.TextMessage, []byte(goResult))
