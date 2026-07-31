@@ -1,17 +1,17 @@
 import Link from "next/link";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { 
-  ArrowRight, 
-  ChevronDown, 
-  ShieldCheck, 
-  Eye, 
-  Store, 
-  Car, 
-  Factory, 
-  Cpu, 
-  Lock, 
-  Server, 
+import {
+  ArrowRight,
+  ChevronDown,
+  ShieldCheck,
+  Eye,
+  Store,
+  Car,
+  Factory,
+  Cpu,
+  Lock,
+  Server,
   Network,
   Activity,
   FileJson,
@@ -23,17 +23,17 @@ import {
 export default function Home() {
   return (
     <div className="min-h-screen bg-background text-primary-text selection:bg-accent-soft/30 font-sans overflow-x-hidden">
-      
+
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        
-        
-        <div 
-          className="absolute inset-0 opacity-[0.02]" 
-          style={{ 
+
+
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
             backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
             backgroundSize: `40px 40px`,
-          }} 
+          }}
         />
       </div>
 
@@ -49,27 +49,27 @@ export default function Home() {
           </span>
           Alaf Teknoloji Yapay Zeka Altyapısı
         </div>
-        
+
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-primary-text max-w-5xl mx-auto leading-[1.1]">
-          Görüntü İşleme ve Yapay Zekanın <br className="hidden md:block" />
+          Yapay Zeka ile Görüntü İşlemenin<br className="hidden md:block" />
           <span className="text-accent">
-            Uç Noktası: Alaf Vision
+            Uç Noktası
           </span>
         </h1>
-        
+
         <p className="text-lg md:text-xl text-secondary-text max-w-3xl mx-auto mb-10 leading-relaxed font-light">
           İhtiyacınıza özel eğitilmiş yapay zeka modelleriyle kameralarınızı akıllı sensörlere dönüştürün. Perakendeden savunma sanayisine, veriyi dışarı çıkarmadan yerelde (Edge) analiz eden kaya gibi sağlam sistemler tasarlıyoruz.
         </p>
-        
+
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <Link 
-            href="https://vision.alafteknoloji.com/login" 
+          <Link
+            href="https://vision.alafteknoloji.com/login"
             className="group relative inline-flex items-center justify-center gap-2 bg-accent text-primary-text px-8 py-4 rounded-xl font-semibold text-lg hover:bg-accent-soft transition-all duration-300 w-full sm:w-auto shadow-xl hover:shadow-xl"
           >
             Canlı Demo
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
-          <a 
+          <a
             href="#cozumler"
             className="group inline-flex items-center justify-center gap-2 bg-surface-2 text-primary-text px-8 py-4 rounded-xl font-semibold text-lg border border-border-subtle hover:bg-surface-2 transition-all duration-300 w-full sm:w-auto"
           >
@@ -141,7 +141,7 @@ export default function Home() {
       <section id="edge-ai" className="relative z-10 py-24 border-y border-border-subtle overflow-hidden">
         {/* Subtle background gradient for this section */}
         <div className="absolute inset-0 bg-background pointer-events-none" />
-        
+
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-primary-text mb-4">Neden Alaf Vision?</h2>
@@ -158,7 +158,7 @@ export default function Home() {
               <h4 className="text-primary-text font-bold mb-2">1. Kamera Görüntüsü</h4>
               <p className="text-sm text-secondary-text">Mevcut IP kameralarınızdan gelen yüksek boyutlu ham video akışı.</p>
             </div>
-            
+
             <div className="hidden md:flex flex-col items-center text-accent">
               <ArrowRight className="w-8 h-8" />
             </div>
@@ -215,24 +215,24 @@ export default function Home() {
           <div className="max-w-4xl mx-auto bg-surface-1 rounded-3xl p-10 md:p-14 border border-border-subtle relative overflow-hidden shadow-2xl">
             {/* Background Icon */}
             <ShieldCheck className="absolute -right-10 -bottom-10 w-64 h-64 text-secondary-text pointer-events-none" />
-            
+
             <div className="relative z-10 md:w-3/4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background border border-border-subtle text-primary-text text-sm font-medium mb-6">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 Askeri Standartlarda Güvenilirlik
               </div>
-              
+
               <h3 className="text-3xl font-bold text-primary-text mb-6 leading-tight">
                 Sıfır Hata Toleranslı <br />
                 Mühendislik Disiplini
               </h3>
-              
+
               <p className="text-lg text-secondary-text leading-relaxed mb-8">
-                Savunma sanayi projelerinde ve test altyapılarında edindiğimiz katı mühendislik prensiplerini, ticari ürünlerimize eksiksiz aktarıyoruz. 
-                <strong className="text-primary-text font-semibold"> 7/24 kesintisiz</strong> çalışan, donanım kaynaklarını en verimli kullanan ve dış müdahalelere tamamen kapalı 
+                Savunma sanayi projelerinde ve test altyapılarında edindiğimiz katı mühendislik prensiplerini, ticari ürünlerimize eksiksiz aktarıyoruz.
+                <strong className="text-primary-text font-semibold"> 7/24 kesintisiz</strong> çalışan, donanım kaynaklarını en verimli kullanan ve dış müdahalelere tamamen kapalı
                 <strong className="text-primary-text font-semibold"> (Air-Gapped)</strong> sistemler inşa ediyoruz.
               </p>
-              
+
               <div className="flex items-center gap-4 text-sm font-medium text-primary-text">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />

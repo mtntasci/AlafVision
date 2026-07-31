@@ -271,7 +271,7 @@ export default function Dashboard() {
         <>
           {/* Camera View */}
           <main className="flex-1 relative bg-background flex items-center justify-center pt-20 pb-4 px-4 z-10">
-            <div className="w-full h-full max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl relative">
+            <div className="relative w-full aspect-video min-h-[400px] max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl">
               {!isStreaming && (
                 <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
                   <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
