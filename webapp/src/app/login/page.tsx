@@ -12,7 +12,7 @@ export default function LoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === "admin" && password === "admin") {
+    if (username === "admin" && password === "1903") {
       // Use the hardcoded token that backend expects
       localStorage.setItem("alafvision_token", "admin_token_123");
       router.push("/dashboard");
