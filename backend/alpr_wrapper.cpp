@@ -52,7 +52,7 @@ char* AlprProcessFrame(const void* data, int size) {
     
     // Once decoded, pass it to the SDK like this:
     UltAlprSdkResult result = UltAlprSdkEngine::process(
-        ULTALPR_SDK_IMAGE_TYPE_RGB24, // Use standard RGB24 after decoding
+        ULTALPR_SDK_IMAGE_TYPE_JPEG, // Use standard JPEG encoding for demo mock
         data,                         // Replace 'data' with 'pixels' in production
         size,                         // Replace 'size' with 'width' in production
         1,                            // Replace '1' with 'height' in production
