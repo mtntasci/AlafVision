@@ -25,20 +25,20 @@ export default function StoreDashboard() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [showHeatmap, setShowHeatmap] = useState(false);
-  
+
   // Tripwire (Sanal Çizgi) state
   const tripwireX = videoDimensions.width * 0.7; // Dik çizgi, ekranın sağ %30'luk kısmında
 
   // Sayaçlar
   const [enteredCount, setEnteredCount] = useState(0);
   const [exitedCount, setExitedCount] = useState(0);
-  
+
   // Geçiş takibi için önceki pozisyonlar
   const previousPositionsRef = useRef<Record<string, number>>({});
-  
+
   // Yüz Tanıma state'leri
   const [knownMap, setKnownMap] = useState<Record<string, string>>({});
-  const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
+  const knownFacesRef = useRef<{ name: string, customId?: string, descriptor: number[] }[]>([]);
   const knownIdsRef = useRef<Set<string>>(new Set());
   const recognitionAttemptsRef = useRef<Record<string, number>>({});
 
@@ -59,7 +59,7 @@ export default function StoreDashboard() {
     const fetchKnownFaces = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "known_faces"));
-        const faces: {name: string, customId?: string, descriptor: number[]}[] = [];
+        const faces: { name: string, customId?: string, descriptor: number[] }[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.name && data.descriptor) {
@@ -106,7 +106,7 @@ export default function StoreDashboard() {
         // Sanal Kapı / Çizgi (Tripwire) Analizi
         filteredResults.forEach(res => {
           const coords = getBoxCoords(res.box);
-          
+
           const isKnown = knownIdsRef.current.has(res.id);
           const attempts = recognitionAttemptsRef.current[res.id] || 0;
           const shouldAttemptRecognition = !isKnown && attempts < 5;
@@ -115,7 +115,7 @@ export default function StoreDashboard() {
             const centerX = coords.x + coords.w / 2;
             const centerY = coords.y + coords.h / 2;
             const prevX = previousPositionsRef.current[res.id];
-            
+
             if (prevX !== undefined) {
               // Soldan sağa geçiş (Giren)
               if (prevX < tripwireX && centerX >= tripwireX) {
@@ -135,7 +135,7 @@ export default function StoreDashboard() {
                 const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 30);
                 gradient.addColorStop(0, "rgba(255, 0, 0, 0.05)");
                 gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
-                
+
                 ctx.fillStyle = gradient;
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
@@ -159,9 +159,9 @@ export default function StoreDashboard() {
 
               if (cropCtx) {
                 cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                
+
                 recognitionAttemptsRef.current[res.id] = attempts + 1;
-                
+
                 setTimeout(async () => {
                   try {
                     const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
@@ -249,9 +249,9 @@ export default function StoreDashboard() {
             Mağaza İstatistikleri
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => {
               if (showHeatmap) clearHeatmap();
               setShowHeatmap(!showHeatmap);
@@ -274,7 +274,7 @@ export default function StoreDashboard() {
               <p className="font-medium text-secondary-text">Kamera başlatılıyor...</p>
             </div>
           )}
-          
+
           {/* Kamera Akışı */}
           <video
             ref={videoRef}
@@ -289,13 +289,13 @@ export default function StoreDashboard() {
               }
             }}
           />
-          
+
           {/* Isı Haritası (Heatmap) Katmanı */}
-          <canvas 
+          <canvas
             ref={heatmapCanvasRef}
             width={videoDimensions.width}
             height={videoDimensions.height}
-            className={`absolute inset-0 w-full h-full z-10 pointer-events-none transition-opacity duration-500 ${showHeatmap ? 'opacity-80' : 'opacity-0'}`} 
+            className={`absolute inset-0 w-full h-full z-10 pointer-events-none transition-opacity duration-500 ${showHeatmap ? 'opacity-80' : 'opacity-0'}`}
             style={{ mixBlendMode: 'screen' }}
           />
 
@@ -305,7 +305,7 @@ export default function StoreDashboard() {
               {/* Tripwire (Sanal Kapı) */}
               <line x1={tripwireX} y1="0" x2={tripwireX} y2={videoDimensions.height} stroke="#10b981" strokeWidth="4" strokeDasharray="10, 10" className="drop-shadow-lg opacity-80 animate-pulse" />
               <text x={tripwireX + 10} y={30} fill="#10b981" fontSize="18" fontWeight="black" className="drop-shadow-md">SANAL KAPI</text>
-              
+
               {/* Kişi Kutuları */}
               {results.map((res) => {
                 const coords = getBoxCoords(res.box);
@@ -314,7 +314,7 @@ export default function StoreDashboard() {
                 const finalY = coords.y;
                 const finalW = coords.w;
                 const finalH = coords.h;
-                
+
                 const style = window.getComputedStyle(videoRef.current);
                 const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
                 if (isMirrored) {
@@ -327,7 +327,7 @@ export default function StoreDashboard() {
                 const knownName = knownMap[res.id];
                 const label = knownName ? knownName : `ID: ${res.id}`;
                 const colorHex = knownName ? "#a855f7" : "#10b981"; // Bilinen kişi ise mor, değilse zümrüt yeşili
-                
+
                 return (
                   <g key={res.id} opacity={boxOpacity}>
                     <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke={colorHex} strokeWidth="3" rx="8" />
@@ -343,22 +343,22 @@ export default function StoreDashboard() {
         {/* Mağaza İstatistikleri (Kompakt Sayaç) */}
         <div className="w-full bg-surface-1 border border-border-subtle rounded-xl p-3 shadow-md flex justify-around items-center">
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-emerald-500 tracking-wider flex items-center gap-1"><ArrowRight size={12}/> İÇERİ GİREN</span>
+            <span className="text-[10px] font-bold text-emerald-500 tracking-wider flex items-center gap-1"><ArrowRight size={12} /> İÇERİ GİREN</span>
             <span className="text-2xl font-black text-emerald-500 drop-shadow-sm">{enteredCount}</span>
           </div>
           <div className="h-10 w-px bg-border-subtle"></div>
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-orange-500 tracking-wider flex items-center gap-1"><ArrowLeftIcon size={12}/> DIŞARI ÇIKAN</span>
+            <span className="text-[10px] font-bold text-orange-500 tracking-wider flex items-center gap-1"><ArrowLeftIcon size={12} /> DIŞARI ÇIKAN</span>
             <span className="text-2xl font-black text-orange-500 drop-shadow-sm">{exitedCount}</span>
           </div>
           <div className="h-10 w-px bg-border-subtle"></div>
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-secondary-text tracking-wider flex items-center gap-1"><Activity size={12}/> AKTİF</span>
+            <span className="text-[10px] font-bold text-secondary-text tracking-wider flex items-center gap-1"><Activity size={12} /> AKTİF</span>
             <span className="text-2xl font-black text-primary-text">{results.length}</span>
           </div>
         </div>
       </div>
-      
+
       <div className="flex-1 w-full max-w-3xl mx-auto px-4 pb-4 min-h-0 z-10">
         <div className="w-full h-full bg-surface-1 border border-border-subtle rounded-2xl p-6 shadow-md flex flex-col justify-center items-center text-center">
           <Activity size={48} className="text-emerald-500/50 mb-4" />
@@ -368,7 +368,7 @@ export default function StoreDashboard() {
           </p>
         </div>
       </div>
-      
+
     </div>
   );
 }
