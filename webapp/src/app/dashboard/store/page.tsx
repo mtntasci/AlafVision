@@ -19,12 +19,17 @@ function getBoxCoords(box?: number[]) {
 export default function StoreDashboard() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const heatmapCanvasRef = useRef<HTMLCanvasElement>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [results, setResults] = useState<any[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [showHeatmap, setShowHeatmap] = useState(false);
+  
+  // Snapshots for crossings
+  type CrossingSnapshot = { id: string; src: string; type: "ENTER" | "EXIT"; timestamp: number; name?: string };
+  const [capturedSnapshots, setCapturedSnapshots] = useState<CrossingSnapshot[]>([]);
 
   // Tripwire (Sanal Çizgi) state
   const tripwireX = videoDimensions.width * 0.7; // Dik çizgi, ekranın sağ %30'luk kısmında
@@ -120,10 +125,16 @@ export default function StoreDashboard() {
               // Soldan sağa geçiş (Giren)
               if (prevX < tripwireX && centerX >= tripwireX) {
                 setEnteredCount(prev => prev + 1);
+                if (videoRef.current && videoRef.current.videoWidth > 0) {
+                  takeSnapshot(res.id, coords, videoRef.current, "ENTER");
+                }
               }
               // Sağdan sola geçiş (Çıkan)
               else if (prevX >= tripwireX && centerX < tripwireX) {
                 setExitedCount(prev => prev + 1);
+                if (videoRef.current && videoRef.current.videoWidth > 0) {
+                  takeSnapshot(res.id, coords, videoRef.current, "EXIT");
+                }
               }
             }
             previousPositionsRef.current[res.id] = centerX;
@@ -205,6 +216,8 @@ export default function StoreDashboard() {
 
   useEffect(() => {
     let stream: MediaStream | null = null;
+    let intervalId: NodeJS.Timeout;
+
     const startCamera = async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({
@@ -212,17 +225,65 @@ export default function StoreDashboard() {
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            setVideoDimensions({
+              width: videoRef.current!.videoWidth,
+              height: videoRef.current!.videoHeight,
+            });
+            setIsStreaming(true);
+          };
         }
+        intervalId = setInterval(sendFrame, 300);
       } catch (err) {
         console.error("Error accessing camera:", err);
       }
     };
 
+    const sendFrame = () => {
+      if (videoRef.current && canvasRef.current && ws && ws.readyState === WebSocket.OPEN) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext("2d");
+
+        if (context && video.videoWidth > 0 && video.videoHeight > 0) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          canvas.toBlob((blob) => {
+            if (blob) ws.send(blob);
+          }, "image/jpeg", 0.7);
+        }
+      }
+    };
+
     startCamera();
+    
     return () => {
       if (stream) stream.getTracks().forEach((track) => track.stop());
+      clearInterval(intervalId);
     };
-  }, []);
+  }, [ws]);
+
+  const takeSnapshot = (id: string, coords: any, video: HTMLVideoElement, type: "ENTER" | "EXIT") => {
+    const cropCanvas = document.createElement("canvas");
+    const padding = 20;
+    const cropX = Math.max(0, coords.x - padding);
+    const cropY = Math.max(0, coords.y - padding);
+    const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+    const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+    cropCanvas.width = cropW;
+    cropCanvas.height = cropH;
+    const cropCtx = cropCanvas.getContext("2d");
+    if (cropCtx) {
+      cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+      const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+      setCapturedSnapshots(prev => [{
+        id, src: dataUrl, type, timestamp: Date.now()
+      }, ...prev].slice(0, 50));
+    }
+  };
 
   const clearHeatmap = () => {
     if (heatmapCanvasRef.current) {
@@ -265,7 +326,7 @@ export default function StoreDashboard() {
       </header>
 
       <div className="flex-none w-full max-w-3xl mx-auto px-4 pt-4 pb-2 z-10 flex flex-col gap-3">
-        <div className="relative w-full aspect-[3/4] sm:aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative w-full h-[45vh] sm:h-auto sm:aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
           {!isStreaming && (
             <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
               <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-border-subtle">
@@ -282,13 +343,9 @@ export default function StoreDashboard() {
             playsInline
             muted
             className="absolute inset-0 w-full h-full object-contain opacity-90 mix-blend-screen"
-            onLoadedMetadata={() => {
-              if (videoRef.current) {
-                setVideoDimensions({ width: videoRef.current.videoWidth, height: videoRef.current.videoHeight });
-                setIsStreaming(true);
-              }
-            }}
           />
+
+          <canvas ref={canvasRef} className="hidden" />
 
           {/* Isı Haritası (Heatmap) Katmanı */}
           <canvas
@@ -359,13 +416,54 @@ export default function StoreDashboard() {
         </div>
       </div>
 
-      <div className="flex-1 w-full max-w-3xl mx-auto px-4 pb-4 min-h-0 z-10">
-        <div className="w-full h-full bg-surface-1 border border-border-subtle rounded-2xl p-6 shadow-md flex flex-col justify-center items-center text-center">
-          <Activity size={48} className="text-emerald-500/50 mb-4" />
-          <h3 className="text-xl font-bold text-primary-text mb-2">Canlı Analiz Aktif</h3>
-          <p className="text-sm text-secondary-text max-w-sm">
-            Kamera üzerindeki dik yeşil kesik çizgi sanal bir kapı görevi görür. Kişilerin çizgiyi sağa veya sola geçişine göre giriş-çıkış sayaçları güncellenir.
-          </p>
+      <div className="flex-1 w-full max-w-3xl mx-auto px-4 pb-4 min-h-0 z-10 flex flex-col">
+        <div className="w-full h-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md flex flex-col min-h-0">
+          <h3 className="text-sm font-bold text-primary-text mb-3 flex items-center gap-2 flex-none">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Canlı Geçiş Listesi
+          </h3>
+          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2">
+            {capturedSnapshots.length > 0 ? (
+              capturedSnapshots.map(snap => {
+                const timeString = new Date(snap.timestamp).toLocaleTimeString('tr-TR');
+                const isKnown = !!knownMap[snap.id];
+                const labelName = knownMap[snap.id] || `ID: ${snap.id}`;
+                const isEnter = snap.type === "ENTER";
+                const badgeColor = isEnter ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" : "bg-orange-500/10 text-orange-500 border-orange-500/30";
+
+                return (
+                  <div key={`${snap.id}-${snap.timestamp}`} className="flex items-start gap-4 border rounded-xl p-2 transition-colors shadow-sm border-border-subtle bg-surface-2 hover:bg-surface-3">
+                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-background shrink-0 border border-border-subtle relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={snap.src} alt={`Cross ${snap.id}`} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1 justify-center min-w-0">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className={`text-[10px] font-black tracking-wider truncate px-1.5 py-0.5 rounded border ${badgeColor}`}>
+                          {isEnter ? "İÇERİ GİRDİ" : "DIŞARI ÇIKTI"}
+                        </span>
+                        <span className="text-[10px] font-semibold text-secondary-text bg-background px-1.5 py-0.5 rounded border border-border-subtle shadow-sm whitespace-nowrap shrink-0">
+                          {timeString}
+                        </span>
+                      </div>
+                      <div className="flex items-center mt-1">
+                        <span className={`text-xs font-bold ${isKnown ? 'text-purple-500' : 'text-primary-text'} truncate max-w-[200px]`}>
+                          {labelName}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="flex-1 flex flex-col justify-center items-center text-center opacity-50 py-8">
+                <Activity size={32} className="text-secondary-text mb-3" />
+                <p className="text-sm text-secondary-text max-w-[200px]">
+                  Kamera üzerindeki dik çizgiden geçişler burada listelenecek.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
