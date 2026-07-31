@@ -17,49 +17,26 @@ int HumanTrackerInit() {
 
 char* HumanTrackerProcessFrame(const void* data, int size) {
     // 1. BURADA GELEN 'data' BUFFER'INI YOLO MODELİNE VERİP INFERENCE YAPIN.
-    // Örnek: std::vector<Detection> detections = yolo_model.predict(data, size);
+    // --- DİKKAT: BURASI SİMÜLASYON (MOCK) ALANIDIR ---
+    // Gerçek bir yapay zeka modeli entegre edilmediği için sizi kameradan "göremez".
+    // Sadece arayüzün çalıştığını görmeniz için ekranın ortasında sahte bir kutu oluşturuyoruz.
+    static int mock_x = 300;
+    static int mock_y = 150;
+    static int frame_count = 0;
+    frame_count++;
+
+    // Kutuyu hafifçe titreterek hareket efekti verelim
+    if (frame_count % 10 == 0) mock_x += 5;
+    if (frame_count % 20 == 0) mock_x -= 5;
     
     // Tracker & NMS Ayarları
     const float CONFIDENCE_THRESHOLD = 0.60f; 
     const int MAX_AGE = 60; // 60 frame boyunca hafızada tut
-    const int CLASS_PERSON = 0;
     
-    // ŞİMDİLİK BOŞ DÖNÜYORUZ (GERÇEK TESPİT YAZILANA KADAR KUTU ÇİZİLMEYECEK)
-    // Gerçek model eklendiğinde aşağıdaki değişkenler YOLO'dan gelecektir.
-    bool person_detected = false; 
-    float current_score = 0.0f;
-    int detected_class = -1;
-    int box_x = 0, box_y = 0, box_w = 0, box_h = 0;
+    std::string result_json = "[{\"id\": \"" + std::to_string(current_id) + "\", \"box\": [" + 
+                 std::to_string(mock_x) + ", " + std::to_string(mock_y) + ", 150, 250], " +
+                 "\"class\": \"person\", \"score\": 0.85}]";
 
-    /* GERÇEK TESPİT DÖNGÜSÜ ÖRNEĞİ:
-    for (auto& det : detections) {
-        if (det.class_id == CLASS_PERSON && det.score >= CONFIDENCE_THRESHOLD) {
-            person_detected = true;
-            current_score = det.score;
-            box_x = det.bbox.x;
-            box_y = det.bbox.y;
-            box_w = det.bbox.width;
-            box_h = det.bbox.height;
-            // NMS VE BYTETRACK GÜNCELLEMELERİ BURADA YAPILIR...
-        }
-    }
-    */
-
-    std::string result_json = "[]"; 
-    
-    if (person_detected && detected_class == CLASS_PERSON && current_score >= CONFIDENCE_THRESHOLD) {
-        lost_frames = 0;
-        result_json = "[{\"id\": \"" + std::to_string(current_id) + "\", \"box\": [" + 
-                 std::to_string(box_x) + ", " + std::to_string(box_y) + ", " + 
-                 std::to_string(box_w) + ", " + std::to_string(box_h) + "], " +
-                 "\"class\": \"person\", \"score\": " + std::to_string(current_score) + "}]";
-    } else {
-        lost_frames++;
-        if (lost_frames > MAX_AGE) {
-            current_id++;
-            lost_frames = 0;
-        }
-    }
     
     char* ret = (char*)malloc(result_json.length() + 1);
     if (ret != NULL) {
