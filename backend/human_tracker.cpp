@@ -29,9 +29,24 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
         current_id++;
     }
 
-    // ID 10000'den başlar ve yukarı doğru artar
-    std::string mockup = "[{\"id\": \"" + std::to_string(current_id) + "\", \"box\": [" + 
-                         std::to_string(box_x) + ", " + std::to_string(box_y) + ", 120, 240], \"class\": \"person\"}]";
+    // Güvenilirlik eşiği (Confidence Threshold)
+    const float CONFIDENCE_THRESHOLD = 0.65f;
+    
+    // Gerçek model eklendiğinde bu skor YOLO'dan gelecektir.
+    // Şimdilik test amaçlı rastgele dalgalanan bir skor simüle edelim.
+    float current_score = 0.85f;
+    if (frame_count % 5 == 0) {
+        current_score = 0.50f; // Bazen eşiğin altına düşsün (False Positive simülasyonu)
+    }
+
+    std::string mockup = "[]"; // Varsayılan olarak boş liste (kimse yok)
+    
+    // Filtreleme: Yalnızca skoru eşiğin üzerinde olanları JSON'a ekle
+    if (current_score >= CONFIDENCE_THRESHOLD) {
+        mockup = "[{\"id\": \"" + std::to_string(current_id) + "\", \"box\": [" + 
+                 std::to_string(box_x) + ", " + std::to_string(box_y) + ", 120, 240], " +
+                 "\"class\": \"person\", \"score\": " + std::to_string(current_score) + "}]";
+    }
     
     char* ret = (char*)malloc(mockup.length() + 1);
     if (ret != NULL) {
