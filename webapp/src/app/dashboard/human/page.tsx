@@ -13,6 +13,23 @@ function getBoxCoords(box?: number[]) {
   return null;
 }
 
+function calculateIoU(box1?: number[], box2?: number[]) {
+  const c1 = getBoxCoords(box1);
+  const c2 = getBoxCoords(box2);
+  if (!c1 || !c2) return 0;
+  
+  const xA = Math.max(c1.x, c2.x);
+  const yA = Math.max(c1.y, c2.y);
+  const xB = Math.min(c1.x + c1.w, c2.x + c2.w);
+  const yB = Math.min(c1.y + c1.h, c2.y + c2.h);
+  
+  const interArea = Math.max(0, xB - xA) * Math.max(0, yB - yA);
+  const box1Area = c1.w * c1.h;
+  const box2Area = c2.w * c2.h;
+  
+  return interArea / (box1Area + box2Area - interArea);
+}
+
 type Snapshot = {
   id: string;
   src: string;
@@ -29,6 +46,7 @@ export default function HumanDashboard() {
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
   const [capturedSnapshots, setCapturedSnapshots] = useState<Snapshot[]>([]);
+  const [fightingIds, setFightingIds] = useState<Set<string>>(new Set());
   const seenHumansRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -101,6 +119,19 @@ export default function HumanDashboard() {
         if (hasNew) {
           setUniqueHumans(new Set(seenHumansRef.current));
         }
+
+        // Kavga Tespiti (Fight Detection Heuristic)
+        const currentFights = new Set<string>();
+        for (let i = 0; i < filteredResults.length; i++) {
+          for (let j = i + 1; j < filteredResults.length; j++) {
+            const iou = calculateIoU(filteredResults[i].box, filteredResults[j].box);
+            if (iou > 0.45) { // Eğer iki kutu %45'den fazla iç içe geçerse (boğuşma)
+              currentFights.add(filteredResults[i].id);
+              currentFights.add(filteredResults[j].id);
+            }
+          }
+        }
+        setFightingIds(currentFights);
 
         setResults(filteredResults);
       } catch (e) {
@@ -176,6 +207,14 @@ export default function HumanDashboard() {
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, backgroundSize: `40px 40px` }} />
       </div>
 
+      {fightingIds.size > 0 && (
+        <div className="absolute top-16 left-0 w-full z-40 bg-red-600/90 text-white font-black py-2 px-4 flex items-center justify-center gap-3 animate-pulse shadow-2xl border-b-4 border-red-800">
+          <span className="text-2xl">⚠️</span>
+          <span className="text-lg tracking-widest">ŞÜPHELİ KAVGA / ARBEDE ALGILANDI</span>
+          <span className="text-2xl">⚠️</span>
+        </div>
+      )}
+
       <header className="flex-none h-[64px] z-30 flex justify-between items-center px-4 bg-background border-b border-border-subtle">
         <div className="flex items-center gap-2">
           <Link href="/dashboard" className="w-10 h-10 rounded-xl bg-surface-2 flex items-center justify-center border border-border-subtle hover:bg-surface-3 transition-colors cursor-pointer mr-1">
@@ -231,11 +270,13 @@ export default function HumanDashboard() {
                 }
 
                 const label = `ID: ${res.text}`;
+                const isFighting = fightingIds.has(res.id);
+                const boxColor = isFighting ? "text-red-500" : "text-blue-500";
 
                 return (
                   <g key={res.id}>
-                    <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke="currentColor" strokeWidth="4" rx="8" className="text-blue-500 drop-shadow-md" />
-                    <rect x={finalX} y={finalY - 30} width={Math.max(label.length * 10 + 16, 60)} height="30" fill="currentColor" rx="4" className="text-blue-500 drop-shadow-md" />
+                    <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke="currentColor" strokeWidth="4" rx="8" className={`${boxColor} drop-shadow-md transition-colors duration-300`} />
+                    <rect x={finalX} y={finalY - 30} width={Math.max(label.length * 10 + 16, 60)} height="30" fill="currentColor" rx="4" className={`${boxColor} drop-shadow-md transition-colors duration-300`} />
                     <text x={finalX + 8} y={finalY - 10} fill="#ffffff" fontSize="16" fontWeight="bold" fontFamily="system-ui, sans-serif">{label}</text>
                   </g>
                 );
