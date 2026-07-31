@@ -285,17 +285,43 @@ export default function Dashboard() {
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover opacity-90 mix-blend-screen"
+                className="absolute inset-0 w-full h-full object-fill opacity-90 mix-blend-screen"
+                onLoadedMetadata={() => {
+                  if (videoRef.current) {
+                    setVideoDimensions({
+                      width: videoRef.current.videoWidth,
+                      height: videoRef.current.videoHeight,
+                    });
+                    setIsStreaming(true);
+                  }
+                }}
               />
               {isStreaming && (
                 <svg
-                  className="absolute inset-0 w-full h-full object-cover z-20 pointer-events-none"
-                  preserveAspectRatio="xMidYMid slice"
-                  viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`}
+                  className="absolute inset-0 w-full h-full z-20 pointer-events-none"
                 >
                   {results.map((res) => {
                     const coords = getBoxCoords(res.box);
-                    if (!coords) return null;
+                    if (!coords || !videoRef.current) return null;
+
+                    const containerWidth = videoRef.current.clientWidth;
+                    const containerHeight = videoRef.current.clientHeight;
+                    
+                    const scaleX = containerWidth / (videoDimensions.width || 1);
+                    const scaleY = containerHeight / (videoDimensions.height || 1);
+
+                    let finalX = coords.x * scaleX;
+                    let finalY = coords.y * scaleY;
+                    let finalW = coords.w * scaleX;
+                    let finalH = coords.h * scaleY;
+
+                    // CSS transform check for mirroring
+                    const style = window.getComputedStyle(videoRef.current);
+                    const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
+                    
+                    if (isMirrored) {
+                      finalX = containerWidth - finalX - finalW;
+                    }
                     
                     let hasLabel = false;
                     let label = "";
@@ -314,10 +340,10 @@ export default function Dashboard() {
                     return (
                       <g key={res.id}>
                         <rect
-                          x={coords.x}
-                          y={coords.y}
-                          width={coords.w}
-                          height={coords.h}
+                          x={finalX}
+                          y={finalY}
+                          width={finalW}
+                          height={finalH}
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="4"
@@ -327,8 +353,8 @@ export default function Dashboard() {
                         {hasLabel && (
                           <>
                             <rect
-                              x={coords.x}
-                              y={coords.y - 30}
+                              x={finalX}
+                              y={finalY - 30}
                               width={Math.max(label.length * 10 + 16, 60)}
                               height="30"
                               fill="currentColor"
@@ -336,8 +362,8 @@ export default function Dashboard() {
                               className={`${colorClass} drop-shadow-md`}
                             />
                             <text
-                              x={coords.x + 8}
-                              y={coords.y - 10}
+                              x={finalX + 8}
+                              y={finalY - 10}
                               fill="#ffffff"
                               fontSize="16"
                               fontWeight="bold"
