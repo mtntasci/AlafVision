@@ -13,6 +13,12 @@ function getBoxCoords(box?: number[]) {
   return null;
 }
 
+type Snapshot = {
+  id: string;
+  src: string;
+  timestamp: number;
+};
+
 export default function HumanDashboard() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -22,6 +28,7 @@ export default function HumanDashboard() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
+  const [capturedSnapshots, setCapturedSnapshots] = useState<Snapshot[]>([]);
   const seenHumansRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -53,10 +60,41 @@ export default function HumanDashboard() {
           .filter((res) => res.box && res.box.length > 0);
 
         let hasNew = false;
+        const now = Date.now();
         filteredResults.forEach((res) => {
           if (!seenHumansRef.current.has(res.text)) {
             seenHumansRef.current.add(res.text);
             hasNew = true;
+
+            if (videoRef.current) {
+              const video = videoRef.current;
+              const coords = getBoxCoords(res.box);
+              
+              if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+                const cropCanvas = document.createElement("canvas");
+                const padding = 20;
+
+                const cropX = Math.max(0, coords.x - padding);
+                const cropY = Math.max(0, coords.y - padding);
+                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                const cropCtx = cropCanvas.getContext("2d");
+
+                if (cropCtx) {
+                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                  const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+
+                  setCapturedSnapshots(prev => [{
+                    id: res.text,
+                    src: dataUrl,
+                    timestamp: now,
+                  }, ...prev]);
+                }
+              }
+            }
           }
         });
 
@@ -75,6 +113,7 @@ export default function HumanDashboard() {
     return () => {
       socket.close();
       seenHumansRef.current.clear();
+      setCapturedSnapshots([]);
     };
   }, [router]);
 
@@ -221,6 +260,46 @@ export default function HumanDashboard() {
               <span className="text-2xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</span>
             </div>
           </div>
+
+          {/* Captured Snapshots Gallery */}
+          {capturedSnapshots.length > 0 && (
+            <div className="w-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md animate-in slide-in-from-bottom-4 fade-in duration-700">
+              <h3 className="text-base font-bold text-primary-text mb-4 tracking-tight px-1 flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                </span>
+                Tespit Edilen Kişiler
+              </h3>
+              <div className="flex flex-col gap-3 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
+                {capturedSnapshots.map(snap => {
+                  const timeString = new Date(snap.timestamp).toLocaleTimeString('tr-TR');
+                  return (
+                    <div key={`${snap.id}-${snap.timestamp}`} className="flex items-start gap-4 border rounded-xl p-3 transition-colors shadow-sm border-blue-500/40 bg-blue-500/5 hover:border-blue-500/80">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-background shrink-0 border border-border-subtle">
+                        <img src={snap.src} alt={`Person ${snap.id}`} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-black text-blue-500 tracking-wider">
+                            YENİ KİŞİ TESPİTİ
+                          </span>
+                          <span className="text-xs font-semibold text-secondary-text bg-surface-2 px-2 py-0.5 rounded border border-border-subtle shadow-sm">
+                            {timeString}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <span className="text-xs font-bold text-primary-text bg-background px-2 py-1 rounded border border-border-subtle shadow-sm">
+                            ID: {snap.id}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
