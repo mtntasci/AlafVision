@@ -30,7 +30,7 @@ export default function Dashboard() {
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [mode, setMode] = useState<"selection" | "vehicle" | "human">("selection");
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
-  const [capturedSnapshots, setCapturedSnapshots] = useState<{id: string, src: string}[]>([]);
+  const [capturedSnapshots, setCapturedSnapshots] = useState<{ id: string, src: string }[]>([]);
   const seenHumansRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export default function Dashboard() {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
+
         // Gelen veriyi diziye normalize edelim (tek obje, dizi veya plates dizisi olabilir)
         let items: any[] = [];
         if (Array.isArray(data)) {
@@ -101,7 +101,7 @@ export default function Dashboard() {
 
         if (mode === "human") {
           let hasNew = false;
-          
+
           filteredResults.forEach((res) => {
             if (!seenHumansRef.current.has(res.text)) {
               seenHumansRef.current.add(res.text);
@@ -111,25 +111,25 @@ export default function Dashboard() {
               if (videoRef.current) {
                 const video = videoRef.current;
                 const coords = getBoxCoords(res.box);
-                
+
                 if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
                   const cropCanvas = document.createElement("canvas");
                   const padding = 20; // Add padding around the person
-                  
+
                   // Map relative coordinates if backend provides absolute, or ensure we don't exceed bounds
                   const cropX = Math.max(0, coords.x - padding);
                   const cropY = Math.max(0, coords.y - padding);
                   const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
                   const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
-                  
+
                   cropCanvas.width = cropW;
                   cropCanvas.height = cropH;
                   const cropCtx = cropCanvas.getContext("2d");
-                  
+
                   if (cropCtx) {
                     cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
                     const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
-                    
+
                     setCapturedSnapshots(prev => [{ id: res.text, src: dataUrl }, ...prev]);
                   }
                 }
@@ -201,7 +201,7 @@ export default function Dashboard() {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
+
           canvas.toBlob((blob) => {
             if (blob) {
               ws.send(blob);
@@ -228,19 +228,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden font-sans">
-      
+
       {/* Background Effects matching AGENTS.md */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        
-        
-        
+
+
+
         {/* Animated Grid */}
-        <div 
-          className="absolute inset-0 opacity-[0.02]" 
-          style={{ 
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
             backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
             backgroundSize: `40px 40px`,
-          }} 
+          }}
         />
       </div>
 
@@ -261,7 +261,7 @@ export default function Dashboard() {
             Canlı Demo
           </span>
         </div>
-        
+
         {/* Secondary Button Rule */}
         <button
           onClick={handleLogout}
@@ -353,15 +353,15 @@ export default function Dashboard() {
                     // CSS transform check for mirroring
                     const style = window.getComputedStyle(videoRef.current);
                     const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
-                    
+
                     if (isMirrored) {
                       finalX = (videoDimensions.width || 1) - finalX - finalW;
                     }
-                    
+
                     let hasLabel = false;
                     let label = "";
                     let colorClass = "text-accent";
-                    
+
                     if (mode === "human") {
                       hasLabel = true;
                       label = `ID: ${res.text}`;
@@ -414,39 +414,43 @@ export default function Dashboard() {
                 </svg>
               )}
               <canvas ref={canvasRef} className="hidden" />
-              
+
               {/* Subtle overlay to make it fit dark theme better */}
-              
+
             </div>
           </main>
 
           {/* Results Feed */}
           <div className="relative z-20 container mx-auto px-4 pb-4">
             {mode === "human" ? (
-              <div className="flex flex-col gap-6">
-                <div className="w-full h-auto bg-surface-1 border border-border-subtle rounded-3xl p-8 shadow-xl flex flex-col md:flex-row items-center justify-around gap-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
-                  <div className="text-center flex-1">
-                    <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">ANLIK EKRANDA (TAKİP EDİLEN)</h3>
-                    <div className="text-6xl font-black text-primary-text">{results.length}</div>
+              <div className="flex flex-col gap-4">
+                {/* Compact Counters for Mobile */}
+                <div className="w-full h-auto bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md flex flex-col gap-3 animate-in fade-in duration-500">
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-sm font-bold text-secondary-text tracking-wide">ANLIK (TAKİP EDİLEN)</span>
+                    <span className="text-2xl font-black text-primary-text">{results.length}</span>
                   </div>
-                  <div className="hidden md:block w-px h-24 bg-border-subtle"></div>
-                  <div className="text-center flex-1">
-                    <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">TOPLAM FARKLI KİŞİ SAYISI</h3>
-                    <div className="text-6xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</div>
+                  <div className="w-full h-px bg-border-subtle"></div>
+                  <div className="flex justify-between items-center px-2">
+                    <span className="text-sm font-bold text-secondary-text tracking-wide">BENZERSİZ KİŞİ</span>
+                    <span className="text-2xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</span>
                   </div>
                 </div>
 
+                {/* Simple List for Snapshots */}
                 {capturedSnapshots.length > 0 && (
-                  <div className="w-full bg-surface-1 border border-border-subtle rounded-3xl p-6 shadow-xl animate-in slide-in-from-bottom-6 fade-in duration-700">
-                    <h3 className="text-xl font-bold text-primary-text mb-4 tracking-tight px-2">Tespit Edilen Kişiler (Snapshots)</h3>
-                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x custom-scrollbar">
+                  <div className="w-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md animate-in slide-in-from-bottom-4 fade-in duration-700">
+                    <h3 className="text-base font-bold text-primary-text mb-3 tracking-tight px-1">Tespit Edilen Kişiler</h3>
+                    <div className="flex flex-col gap-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2">
                       {capturedSnapshots.map(snap => (
-                        <div key={snap.id} className="min-w-[140px] max-w-[140px] bg-surface-2 border border-border-subtle rounded-2xl p-2 flex flex-col gap-3 snap-start shrink-0 hover:border-blue-500/50 transition-colors">
-                          <div className="w-full h-[140px] rounded-xl overflow-hidden bg-background">
+                        <div key={snap.id} className="flex items-center gap-4 bg-surface-2 border border-border-subtle rounded-xl p-2 hover:border-blue-500/50 transition-colors">
+                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-background shrink-0">
                             <img src={snap.src} alt={`Person ${snap.id}`} className="w-full h-full object-cover" />
                           </div>
-                          <div className="text-center pb-1">
-                            <span className="text-sm font-bold text-blue-500 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">ID: {snap.id}</span>
+                          <div className="flex-1">
+                            <span className="text-sm font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
+                              ID: {snap.id}
+                            </span>
                           </div>
                         </div>
                       ))}
