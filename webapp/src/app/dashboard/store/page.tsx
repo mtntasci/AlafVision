@@ -98,7 +98,7 @@ export default function StoreDashboard() {
 
         const filteredResults = items
           .map((item) => ({
-            id: item.id || Date.now().toString(),
+            id: item.text || item.id || Date.now().toString(),
             box: item.box || [],
           }))
           .filter((res) => res.box && res.box.length > 0);
