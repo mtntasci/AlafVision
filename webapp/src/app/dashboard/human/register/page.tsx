@@ -12,6 +12,7 @@ export default function RegisterFace() {
   const router = useRouter();
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [name, setName] = useState("");
+  const [customId, setCustomId] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -68,6 +69,7 @@ export default function RegisterFace() {
       // 3. Save to Firebase
       await addDoc(collection(db, "known_faces"), {
         name: name.trim(),
+        customId: customId.trim(),
         descriptor: descriptorArray,
         photoBase64: imageSrc,
         createdAt: new Date().toISOString()
@@ -142,6 +144,18 @@ export default function RegisterFace() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Örn: Mehmet Yılmaz"
+                  className="w-full px-4 py-3 rounded-xl bg-background border border-border-subtle text-primary-text font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  disabled={isProcessing}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-bold text-primary-text ml-1">Özel ID (Opsiyonel)</label>
+                <input
+                  type="text"
+                  value={customId}
+                  onChange={(e) => setCustomId(e.target.value)}
+                  placeholder="Örn: MT-1001 veya EMP450"
                   className="w-full px-4 py-3 rounded-xl bg-background border border-border-subtle text-primary-text font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                   disabled={isProcessing}
                 />

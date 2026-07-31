@@ -53,7 +53,7 @@ export default function HumanDashboard() {
   const [knownMap, setKnownMap] = useState<Record<string, string>>({});
   
   const seenHumansRef = useRef<Set<string>>(new Set());
-  const knownFacesRef = useRef<{name: string, descriptor: number[]}[]>([]);
+  const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
 
   useEffect(() => {
     // Face API Modellerini Yükle
@@ -74,11 +74,11 @@ export default function HumanDashboard() {
     const fetchKnownFaces = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "known_faces"));
-        const faces: {name: string, descriptor: number[]}[] = [];
+        const faces: {name: string, customId?: string, descriptor: number[]}[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.name && data.descriptor) {
-            faces.push({ name: data.name, descriptor: data.descriptor });
+            faces.push({ name: data.name, customId: data.customId, descriptor: data.descriptor });
           }
         });
         knownFacesRef.current = faces;
@@ -159,16 +159,17 @@ export default function HumanDashboard() {
                     try {
                       const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
                       if (detection && knownFacesRef.current.length > 0) {
-                        let bestMatch = { name: "", distance: 1.0 };
+                        let bestMatch = { name: "", customId: "", distance: 1.0 };
                         for (const known of knownFacesRef.current) {
                           const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
                           if (distance < bestMatch.distance) {
-                            bestMatch = { name: known.name, distance };
+                            bestMatch = { name: known.name, customId: known.customId || "", distance };
                           }
                         }
                         // Eşik değeri: 0.55 altı güvenilir kabul edilir
                         if (bestMatch.distance < 0.55) {
-                          setKnownMap(prev => ({ ...prev, [res.text]: bestMatch.name }));
+                          const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                          setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
                         }
                       }
                     } catch (e) {
@@ -393,7 +394,7 @@ export default function HumanDashboard() {
                     <div className="flex-1 flex flex-col gap-1 justify-center min-w-0">
                       <div className="flex justify-between items-center gap-2">
                         <span className={`text-[10px] font-black truncate tracking-wider ${isKnown ? 'text-purple-500' : 'text-blue-500'}`}>
-                          {isKnown ? "PERSONEL / TANIDIK" : "YABANCI KİŞİ"}
+                          {isKnown ? "BİLİNEN KİŞİ" : "YABANCI KİŞİ"}
                         </span>
                         <span className="text-[10px] font-semibold text-secondary-text bg-surface-2 px-1.5 py-0.5 rounded border border-border-subtle shadow-sm whitespace-nowrap shrink-0">
                           {timeString}
