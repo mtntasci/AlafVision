@@ -84,7 +84,7 @@ export default function StoreDashboard() {
     }
 
     const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://visionapi.alafteknoloji.com/stream";
-    const socket = new WebSocket(`${socketUrl}?token=store_${token}`);
+    const socket = new WebSocket(`${socketUrl}?token=humanCounter_${token}`);
 
     socket.onopen = () => {
       console.log("WebSocket connected");
