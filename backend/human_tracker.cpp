@@ -45,7 +45,7 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
 
     const float CONFIDENCE_THRESHOLD = 0.60f;
     const float NMS_THRESHOLD = 0.40f;
-    const int MAX_AGE = 60;
+    const int MAX_AGE = 300;
     const int CLASS_PERSON = 0;
 
     Mat blob = blobFromImage(frame, 1/255.0, Size(416, 416), Scalar(0,0,0), true, false);

@@ -30,6 +30,8 @@ export default function Dashboard() {
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [mode, setMode] = useState<"selection" | "vehicle" | "human">("selection");
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
+  const [capturedSnapshots, setCapturedSnapshots] = useState<{id: string, src: string}[]>([]);
+  const seenHumansRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (mode === "selection") return;
@@ -98,12 +100,47 @@ export default function Dashboard() {
           });
 
         if (mode === "human") {
-          const newIds = filteredResults.map(r => r.text);
-          setUniqueHumans(prev => {
-            const nextSet = new Set(prev);
-            newIds.forEach(id => nextSet.add(id));
-            return nextSet;
+          let hasNew = false;
+          
+          filteredResults.forEach((res) => {
+            if (!seenHumansRef.current.has(res.text)) {
+              seenHumansRef.current.add(res.text);
+              hasNew = true;
+
+              // Capture snapshot for this new person
+              if (videoRef.current) {
+                const video = videoRef.current;
+                const coords = getBoxCoords(res.box);
+                
+                if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+                  const cropCanvas = document.createElement("canvas");
+                  const padding = 20; // Add padding around the person
+                  
+                  // Map relative coordinates if backend provides absolute, or ensure we don't exceed bounds
+                  const cropX = Math.max(0, coords.x - padding);
+                  const cropY = Math.max(0, coords.y - padding);
+                  const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                  const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+                  
+                  cropCanvas.width = cropW;
+                  cropCanvas.height = cropH;
+                  const cropCtx = cropCanvas.getContext("2d");
+                  
+                  if (cropCtx) {
+                    cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                    const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+                    
+                    setCapturedSnapshots(prev => [{ id: res.text, src: dataUrl }, ...prev]);
+                  }
+                }
+              }
+            }
           });
+
+          if (hasNew) {
+            // Trigger re-render with updated set
+            setUniqueHumans(new Set(seenHumansRef.current));
+          }
         }
 
         // Ekranda hayalet araç birikmemesi için ...prev yerine doğrudan yeni listeyi set ediyoruz (replace)
@@ -120,6 +157,8 @@ export default function Dashboard() {
 
     return () => {
       socket.close();
+      seenHumansRef.current.clear();
+      setCapturedSnapshots([]);
     };
   }, [router, mode]);
 
@@ -384,16 +423,36 @@ export default function Dashboard() {
           {/* Results Feed */}
           <div className="relative z-20 container mx-auto px-4 pb-4">
             {mode === "human" ? (
-              <div className="w-full h-auto bg-surface-1 border border-border-subtle rounded-3xl p-8 shadow-xl flex flex-col md:flex-row items-center justify-around gap-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
-                <div className="text-center flex-1">
-                  <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">ANLIK EKRANDA (TAKİP EDİLEN)</h3>
-                  <div className="text-6xl font-black text-primary-text">{results.length}</div>
+              <div className="flex flex-col gap-6">
+                <div className="w-full h-auto bg-surface-1 border border-border-subtle rounded-3xl p-8 shadow-xl flex flex-col md:flex-row items-center justify-around gap-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                  <div className="text-center flex-1">
+                    <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">ANLIK EKRANDA (TAKİP EDİLEN)</h3>
+                    <div className="text-6xl font-black text-primary-text">{results.length}</div>
+                  </div>
+                  <div className="hidden md:block w-px h-24 bg-border-subtle"></div>
+                  <div className="text-center flex-1">
+                    <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">TOPLAM FARKLI KİŞİ SAYISI</h3>
+                    <div className="text-6xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</div>
+                  </div>
                 </div>
-                <div className="hidden md:block w-px h-24 bg-border-subtle"></div>
-                <div className="text-center flex-1">
-                  <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">TOPLAM FARKLI KİŞİ SAYISI</h3>
-                  <div className="text-6xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</div>
-                </div>
+
+                {capturedSnapshots.length > 0 && (
+                  <div className="w-full bg-surface-1 border border-border-subtle rounded-3xl p-6 shadow-xl animate-in slide-in-from-bottom-6 fade-in duration-700">
+                    <h3 className="text-xl font-bold text-primary-text mb-4 tracking-tight px-2">Tespit Edilen Kişiler (Snapshots)</h3>
+                    <div className="flex gap-4 overflow-x-auto pb-4 snap-x custom-scrollbar">
+                      {capturedSnapshots.map(snap => (
+                        <div key={snap.id} className="min-w-[140px] max-w-[140px] bg-surface-2 border border-border-subtle rounded-2xl p-2 flex flex-col gap-3 snap-start shrink-0 hover:border-blue-500/50 transition-colors">
+                          <div className="w-full h-[140px] rounded-xl overflow-hidden bg-background">
+                            <img src={snap.src} alt={`Person ${snap.id}`} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="text-center pb-1">
+                            <span className="text-sm font-bold text-blue-500 bg-blue-500/10 px-3 py-1.5 rounded-lg border border-blue-500/20">ID: {snap.id}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <PlateFeed results={results} />
