@@ -20,6 +20,15 @@ function getBoxCoords(box?: number[]) {
   return null;
 }
 
+type AnomalySnapshot = {
+  id: string;
+  src: string;
+  code: string;
+  message: string;
+  timestamp: number;
+  type: 'intrusion' | 'loitering';
+};
+
 export default function Dashboard() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -29,9 +38,18 @@ export default function Dashboard() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [mode, setMode] = useState<"selection" | "vehicle" | "human">("selection");
+  const [anomalyMode, setAnomalyMode] = useState<"none" | "intrusion" | "loitering">("none");
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
-  const [capturedSnapshots, setCapturedSnapshots] = useState<{ id: string, src: string }[]>([]);
+  const [capturedSnapshots, setCapturedSnapshots] = useState<AnomalySnapshot[]>([]);
   const seenHumansRef = useRef<Set<string>>(new Set());
+  const humanFirstSeenRef = useRef<Record<string, number>>({});
+  const triggeredAnomaliesRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    humanFirstSeenRef.current = {};
+    triggeredAnomaliesRef.current.clear();
+    setCapturedSnapshots([]);
+  }, [anomalyMode]);
 
   useEffect(() => {
     if (mode === "selection") return;
@@ -101,36 +119,80 @@ export default function Dashboard() {
 
         if (mode === "human") {
           let hasNew = false;
+          const now = Date.now();
 
           filteredResults.forEach((res) => {
             if (!seenHumansRef.current.has(res.text)) {
               seenHumansRef.current.add(res.text);
               hasNew = true;
+            }
 
-              // Capture snapshot for this new person
-              if (videoRef.current) {
-                const video = videoRef.current;
-                const coords = getBoxCoords(res.box);
+            if (!humanFirstSeenRef.current[res.text]) {
+              humanFirstSeenRef.current[res.text] = now;
+            }
 
-                if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
-                  const cropCanvas = document.createElement("canvas");
-                  const padding = 20; // Add padding around the person
+            const firstSeen = humanFirstSeenRef.current[res.text];
+            const durationMs = now - firstSeen;
 
-                  // Map relative coordinates if backend provides absolute, or ensure we don't exceed bounds
-                  const cropX = Math.max(0, coords.x - padding);
-                  const cropY = Math.max(0, coords.y - padding);
-                  const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-                  const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+            let anomalyTriggered = false;
+            let anomalyType = "";
+            let anomalyCode = "";
+            let anomalyMessage = "";
 
-                  cropCanvas.width = cropW;
-                  cropCanvas.height = cropH;
-                  const cropCtx = cropCanvas.getContext("2d");
+            if (videoRef.current) {
+              const video = videoRef.current;
+              const coords = getBoxCoords(res.box);
 
-                  if (cropCtx) {
-                    cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                    const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+              if (coords) {
+                // Determine Anomaly
+                if (anomalyMode === "intrusion") {
+                  const zoneX = video.videoWidth * 0.7; // Right 30%
+                  if (coords.x + coords.w > zoneX) {
+                    anomalyTriggered = true;
+                    anomalyType = "intrusion";
+                    anomalyCode = "ZONE_BREACH";
+                    anomalyMessage = "⚠️ YASAK BÖLGE İHLALİ";
+                  }
+                } else if (anomalyMode === "loitering") {
+                  if (durationMs > 10000) {
+                    anomalyTriggered = true;
+                    anomalyType = "loitering";
+                    anomalyCode = "TIME_EXCEED";
+                    anomalyMessage = "⚠️ ŞÜPHELİ BEKLEME";
+                  }
+                }
 
-                    setCapturedSnapshots(prev => [{ id: res.text, src: dataUrl }, ...prev]);
+                // Capture snapshot for anomaly
+                const anomalyKey = `${res.text}_${anomalyCode}`;
+                if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
+                  triggeredAnomaliesRef.current.add(anomalyKey);
+
+                  if (video.videoWidth > 0 && video.videoHeight > 0) {
+                    const cropCanvas = document.createElement("canvas");
+                    const padding = 20;
+
+                    const cropX = Math.max(0, coords.x - padding);
+                    const cropY = Math.max(0, coords.y - padding);
+                    const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                    const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+                    cropCanvas.width = cropW;
+                    cropCanvas.height = cropH;
+                    const cropCtx = cropCanvas.getContext("2d");
+
+                    if (cropCtx) {
+                      cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                      const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+
+                      setCapturedSnapshots(prev => [{
+                        id: res.text,
+                        src: dataUrl,
+                        code: anomalyCode,
+                        message: anomalyMessage,
+                        timestamp: now,
+                        type: anomalyType as 'intrusion' | 'loitering'
+                      }, ...prev]);
+                    }
                   }
                 }
               }
@@ -138,7 +200,6 @@ export default function Dashboard() {
           });
 
           if (hasNew) {
-            // Trigger re-render with updated set
             setUniqueHumans(new Set(seenHumansRef.current));
           }
         }
@@ -309,7 +370,31 @@ export default function Dashboard() {
       ) : (
         <>
           {/* Camera View */}
-          <main className="flex-1 relative bg-background flex items-center justify-center pt-20 pb-4 px-4 z-10">
+          <main className="flex-1 relative bg-background flex flex-col items-center justify-center pt-24 pb-4 px-4 z-10">
+            {mode === "human" && (
+              <div className="mb-6 w-full max-w-5xl mx-auto flex justify-center animate-in slide-in-from-top-4 fade-in duration-500">
+                <div className="bg-surface-1/80 backdrop-blur-md border border-border-subtle rounded-2xl p-1 inline-flex shadow-lg overflow-x-auto custom-scrollbar">
+                  <button 
+                    onClick={() => setAnomalyMode("none")}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${anomalyMode === "none" ? "bg-accent text-background shadow-sm" : "text-secondary-text hover:text-primary-text hover:bg-surface-2"}`}
+                  >
+                    Kapalı
+                  </button>
+                  <button 
+                    onClick={() => setAnomalyMode("intrusion")}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${anomalyMode === "intrusion" ? "bg-red-500 text-white shadow-sm" : "text-secondary-text hover:text-red-400 hover:bg-surface-2"}`}
+                  >
+                    Yasak Bölge İhlali
+                  </button>
+                  <button 
+                    onClick={() => setAnomalyMode("loitering")}
+                    className={`px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap ${anomalyMode === "loitering" ? "bg-orange-500 text-white shadow-sm" : "text-secondary-text hover:text-orange-400 hover:bg-surface-2"}`}
+                  >
+                    Uzun Bekleme Süresi
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="relative w-full aspect-video min-h-[400px] max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl">
               {!isStreaming && (
                 <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
@@ -341,6 +426,19 @@ export default function Dashboard() {
                   viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`}
                   preserveAspectRatio="xMidYMid meet"
                 >
+                  {anomalyMode === "intrusion" && mode === "human" && (
+                    <rect
+                      x={videoDimensions.width * 0.7}
+                      y={0}
+                      width={videoDimensions.width * 0.3}
+                      height={videoDimensions.height}
+                      fill="rgba(239, 68, 68, 0.15)"
+                      stroke="rgba(239, 68, 68, 0.6)"
+                      strokeWidth="4"
+                      strokeDasharray="10, 10"
+                    />
+                  )}
+                  
                   {results.map((res) => {
                     const coords = getBoxCoords(res.box);
                     if (!coords || !videoRef.current) return null;
@@ -366,6 +464,20 @@ export default function Dashboard() {
                       hasLabel = true;
                       label = `ID: ${res.text}`;
                       colorClass = "text-blue-500";
+
+                      const firstSeen = humanFirstSeenRef.current[res.text] || Date.now();
+                      const durationMs = Date.now() - firstSeen;
+
+                      if (anomalyMode === "intrusion") {
+                        const zoneX = (videoDimensions.width || 1) * 0.7;
+                        if (coords.x + coords.w > zoneX) {
+                          colorClass = "text-red-500";
+                        }
+                      } else if (anomalyMode === "loitering") {
+                        if (durationMs > 10000) {
+                          colorClass = "text-orange-500";
+                        }
+                      }
                     } else {
                       hasLabel = Boolean(res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "");
                       label = hasLabel ? res.text.toUpperCase() : "";
@@ -437,23 +549,49 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Simple List for Snapshots */}
+                {/* Security Log Gallery */}
                 {capturedSnapshots.length > 0 && (
                   <div className="w-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md animate-in slide-in-from-bottom-4 fade-in duration-700">
-                    <h3 className="text-base font-bold text-primary-text mb-3 tracking-tight px-1">Tespit Edilen Kişiler</h3>
-                    <div className="flex flex-col gap-2 max-h-[30vh] overflow-y-auto custom-scrollbar pr-2">
-                      {capturedSnapshots.map(snap => (
-                        <div key={snap.id} className="flex items-center gap-4 bg-surface-2 border border-border-subtle rounded-xl p-2 hover:border-blue-500/50 transition-colors">
-                          <div className="w-12 h-12 rounded-lg overflow-hidden bg-background shrink-0">
-                            <img src={snap.src} alt={`Person ${snap.id}`} className="w-full h-full object-cover" />
+                    <h3 className="text-base font-bold text-primary-text mb-4 tracking-tight px-1 flex items-center gap-3">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                      </span>
+                      Güvenlik Olay Günlüğü
+                    </h3>
+                    <div className="flex flex-col gap-3 max-h-[40vh] overflow-y-auto custom-scrollbar pr-2">
+                      {capturedSnapshots.map(snap => {
+                        const isIntrusion = snap.type === 'intrusion';
+                        const colorClass = isIntrusion ? "border-red-500/40 bg-red-500/5 hover:border-red-500/80" : "border-orange-500/40 bg-orange-500/5 hover:border-orange-500/80";
+                        const textColor = isIntrusion ? "text-red-500" : "text-orange-500";
+                        const timeString = new Date(snap.timestamp).toLocaleTimeString('tr-TR');
+                        
+                        return (
+                          <div key={`${snap.id}-${snap.timestamp}`} className={`flex items-start gap-4 border rounded-xl p-3 transition-colors shadow-sm ${colorClass}`}>
+                            <div className="w-16 h-16 rounded-lg overflow-hidden bg-background shrink-0 border border-border-subtle">
+                              <img src={snap.src} alt={`Anomaly ${snap.id}`} className="w-full h-full object-cover" />
+                            </div>
+                            <div className="flex-1 flex flex-col gap-1">
+                              <div className="flex justify-between items-center">
+                                <span className={`text-xs font-black ${textColor} tracking-wider`}>
+                                  {snap.message}
+                                </span>
+                                <span className="text-xs font-semibold text-secondary-text bg-surface-2 px-2 py-0.5 rounded border border-border-subtle shadow-sm">
+                                  {timeString}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <span className="text-xs font-bold text-primary-text bg-background px-2 py-1 rounded border border-border-subtle shadow-sm">
+                                  ID: {snap.id}
+                                </span>
+                                <span className="text-xs font-semibold text-secondary-text bg-background px-2 py-1 rounded border border-border-subtle shadow-sm">
+                                  KOD: {snap.code}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <span className="text-sm font-bold text-blue-500 bg-blue-500/10 px-2 py-1 rounded border border-blue-500/20">
-                              ID: {snap.id}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
