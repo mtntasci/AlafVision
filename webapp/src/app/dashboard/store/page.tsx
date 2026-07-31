@@ -31,7 +31,7 @@ export default function StoreDashboard() {
   const [exitedCount, setExitedCount] = useState(0);
   
   // Geçiş takibi için önceki pozisyonlar
-  const previousPositionsRef = useRef(new Map<string, number>());
+  const previousPositionsRef = useRef<Record<string, number>>({});
 
   useEffect(() => {
     const token = localStorage.getItem("alafvision_token");
@@ -65,7 +65,7 @@ export default function StoreDashboard() {
           const coords = getBoxCoords(res.box);
           if (coords) {
             const centerY = coords.y + coords.h / 2;
-            const prevY = previousPositionsRef.current.get(res.id);
+            const prevY = previousPositionsRef.current[res.id];
             
             if (prevY !== undefined) {
               // Yukarıdan aşağıya geçiş (Giren)
@@ -77,7 +77,7 @@ export default function StoreDashboard() {
                 setExitedCount(prev => prev + 1);
               }
             }
-            previousPositionsRef.current.set(res.id, centerY);
+            previousPositionsRef.current[res.id] = centerY;
 
             // Heatmap Çizimi
             if (heatmapCanvasRef.current && showHeatmap) {
