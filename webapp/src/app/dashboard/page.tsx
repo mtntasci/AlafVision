@@ -285,7 +285,7 @@ export default function Dashboard() {
                 autoPlay
                 playsInline
                 muted
-                className="absolute inset-0 w-full h-full object-fill opacity-90 mix-blend-screen"
+                className="absolute inset-0 w-full h-full object-contain opacity-90 mix-blend-screen"
                 onLoadedMetadata={() => {
                   if (videoRef.current) {
                     setVideoDimensions({
@@ -304,23 +304,21 @@ export default function Dashboard() {
                     const coords = getBoxCoords(res.box);
                     if (!coords || !videoRef.current) return null;
 
-                    const containerWidth = videoRef.current.clientWidth;
-                    const containerHeight = videoRef.current.clientHeight;
+                    // Yüzdelik (Percentage) sistem ile mobil uyumlu ölçeklendirme
+                    const origW = videoDimensions.width || 1;
+                    const origH = videoDimensions.height || 1;
                     
-                    const scaleX = containerWidth / (videoDimensions.width || 1);
-                    const scaleY = containerHeight / (videoDimensions.height || 1);
-
-                    let finalX = coords.x * scaleX;
-                    let finalY = coords.y * scaleY;
-                    let finalW = coords.w * scaleX;
-                    let finalH = coords.h * scaleY;
+                    let pctX = (coords.x / origW) * 100;
+                    const pctY = (coords.y / origH) * 100;
+                    const pctW = (coords.w / origW) * 100;
+                    const pctH = (coords.h / origH) * 100;
 
                     // CSS transform check for mirroring
                     const style = window.getComputedStyle(videoRef.current);
                     const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
                     
                     if (isMirrored) {
-                      finalX = containerWidth - finalX - finalW;
+                      pctX = 100 - pctX - pctW;
                     }
                     
                     let hasLabel = false;
@@ -340,10 +338,10 @@ export default function Dashboard() {
                     return (
                       <g key={res.id}>
                         <rect
-                          x={finalX}
-                          y={finalY}
-                          width={finalW}
-                          height={finalH}
+                          x={`${pctX}%`}
+                          y={`${pctY}%`}
+                          width={`${pctW}%`}
+                          height={`${pctH}%`}
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="4"
@@ -353,8 +351,8 @@ export default function Dashboard() {
                         {hasLabel && (
                           <>
                             <rect
-                              x={finalX}
-                              y={finalY - 30}
+                              x={`${pctX}%`}
+                              y={`calc(${pctY}% - 30px)`}
                               width={Math.max(label.length * 10 + 16, 60)}
                               height="30"
                               fill="currentColor"
@@ -362,8 +360,8 @@ export default function Dashboard() {
                               className={`${colorClass} drop-shadow-md`}
                             />
                             <text
-                              x={finalX + 8}
-                              y={finalY - 10}
+                              x={`calc(${pctX}% + 8px)`}
+                              y={`calc(${pctY}% - 10px)`}
                               fill="#ffffff"
                               fontSize="16"
                               fontWeight="bold"

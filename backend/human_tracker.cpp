@@ -28,8 +28,18 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
         // Normalde ekran dışına çıkınca yeni kişi gelmeli. Test amaçlı aynı kişiyi koruyoruz.
     }
 
-    // Tracker Ayarları (SORT / ByteTrack Parametreleri)
-    const float CONFIDENCE_THRESHOLD = 0.80f;
+    // COCO Class ID Filtrelemesi: Sadece Person (0) kabul edilecek
+    const int CLASS_PERSON = 0;
+    int detected_class = 0; // Simülasyon: Algılanan sınıf (0=İnsan, 62=TV/Monitor vb.)
+    
+    // Rastgele sahte tespit (Monitor) simülasyonu
+    if (frame_count % 75 == 0) {
+        detected_class = 62; // 62: TV/Monitor
+    }
+
+    // Tracker & NMS Ayarları
+    const float CONFIDENCE_THRESHOLD = 0.60f; // Esnetilmiş eşik (Küçük insanlar için)
+    // float NMS_IOU_THRESHOLD = 0.45f; // Gerçek motorda Non-Maximum Suppression eşiği
     const int MAX_AGE = 60; // 60 frame boyunca hafızada tut
     
     float current_score = 0.85f;
@@ -41,21 +51,23 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
 
     std::string mockup = "[]"; 
     
-    if (current_score >= CONFIDENCE_THRESHOLD) {
+    // Adım 1: Sadece İnsan (0) sınıfı
+    // Adım 2: Güvenilirlik eşiği >= 0.60
+    // Adım 3: (Gerçek motor entegre edildiğinde burada NMS filtrelemesi uygulanır)
+    if (detected_class == CLASS_PERSON && current_score >= CONFIDENCE_THRESHOLD) {
         // Kişi yüksek güvenilirlikle tespit edildi. Tracker süresi sıfırlanır.
         lost_frames = 0;
         mockup = "[{\"id\": \"" + std::to_string(current_id) + "\", \"box\": [" + 
                  std::to_string(box_x) + ", " + std::to_string(box_y) + ", 120, 240], " +
                  "\"class\": \"person\", \"score\": " + std::to_string(current_score) + "}]";
     } else {
-        // Kişi tespit edilemedi. Ancak MAX_AGE bitene kadar ID'yi (current_id) öldürmüyoruz.
+        // Kişi tespit edilemedi veya sınıf insan değil (Örn: Monitor). 
+        // Ancak MAX_AGE bitene kadar ID'yi öldürmüyoruz.
         lost_frames++;
         if (lost_frames > MAX_AGE) {
-            // max_age aşıldıysa kişi tamamen kaybedilmiş sayılır, yeni biri gelince ID değişir
             current_id++;
             lost_frames = 0;
         }
-        // Not: ByteTrack kaybolan kişileri (coasting) tahmin edip döndürebilir ama mock'ta doğrudan gizliyoruz.
     }
     
     char* ret = (char*)malloc(mockup.length() + 1);
