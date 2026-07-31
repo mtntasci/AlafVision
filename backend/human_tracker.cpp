@@ -43,8 +43,8 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
     Mat frame = imdecode(Mat(1, size, CV_8UC1, (void*)data), IMREAD_COLOR);
     if (frame.empty()) return strdup("[]");
 
-    const float CONFIDENCE_THRESHOLD = 0.60f;
-    const float NMS_THRESHOLD = 0.40f;
+    const float CONFIDENCE_THRESHOLD = 0.75f;
+    const float NMS_THRESHOLD = 0.45f;
     const int MAX_AGE = 90;
     const int CLASS_PERSON = 0;
 
@@ -62,12 +62,17 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
     for (size_t i = 0; i < outs.size(); ++i) {
         float* data_ptr = (float*)outs[i].data;
         for (int j = 0; j < outs[i].rows; ++j, data_ptr += outs[i].cols) {
+            float objectness = data_ptr[4];
+            if (objectness < 0.1f) continue;
+            
             Mat scores = outs[i].row(j).colRange(5, outs[i].cols);
             Point classIdPoint;
-            double confidence;
-            minMaxLoc(scores, 0, &confidence, 0, &classIdPoint);
+            double class_prob;
+            minMaxLoc(scores, 0, &class_prob, 0, &classIdPoint);
             
-            // Sadece CLASS 0 (İnsan) ve skor > 0.60
+            float confidence = (float)(objectness * class_prob);
+            
+            // STRICTLY CLASS 0 (Person) and highly confident
             if (confidence > CONFIDENCE_THRESHOLD && classIdPoint.x == CLASS_PERSON) {
                 int centerX = (int)(data_ptr[0] * frame.cols);
                 int centerY = (int)(data_ptr[1] * frame.rows);
@@ -104,7 +109,7 @@ char* HumanTrackerProcessFrame(const void* data, int size) {
         Point det_centroid(det.x + det.width/2, det.y + det.height/2);
         
         int best_match_idx = -1;
-        float min_dist = 150.0f; // Eşleşme için maksimum sapma mesafesi (piksel)
+        float min_dist = 300.0f; // Extremely generous threshold to prevent ID flickering
         
         for (size_t j = 0; j < tracked_persons.size(); ++j) {
             if (matched_trackers[j]) continue;

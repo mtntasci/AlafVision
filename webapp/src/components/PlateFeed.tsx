@@ -16,7 +16,7 @@ interface PlateFeedProps {
 }
 
 export function PlateFeed({ results }: PlateFeedProps) {
-  const listRef = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="w-full h-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md flex flex-col">
