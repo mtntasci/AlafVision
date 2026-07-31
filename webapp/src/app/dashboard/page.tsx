@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, LogOut, Video } from "lucide-react";
+import { Camera, LogOut, Video, Users, Car } from "lucide-react";
 import { PlateFeed, PlateResult } from "../../components/PlateFeed";
 
 function getBoxCoords(box?: number[]) {
@@ -28,8 +28,12 @@ export default function Dashboard() {
   const [results, setResults] = useState<PlateResult[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
+  const [mode, setMode] = useState<"selection" | "vehicle" | "human">("selection");
+  const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
 
   useEffect(() => {
+    if (mode === "selection") return;
+
     const token = localStorage.getItem("alafvision_token");
     if (!token) {
       router.push("/login");
@@ -37,8 +41,10 @@ export default function Dashboard() {
     }
 
     // Initialize WebSocket
+    const prefix = mode === "vehicle" ? "vehicle_" : "humanCounter_";
+    const socketToken = `${prefix}${token}`;
     const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://visionapi.alafteknoloji.com/stream";
-    const socket = new WebSocket(`${socketUrl}?token=${token}`);
+    const socket = new WebSocket(`${socketUrl}?token=${socketToken}`);
 
     socket.onopen = () => {
       console.log("WebSocket connected");
@@ -74,6 +80,10 @@ export default function Dashboard() {
             } as PlateResult & { type?: string };
           })
           .filter((res) => {
+            if (mode === "human") {
+              return res.text && res.text !== "UNKNOWN";
+            }
+
             const makeLower = (res.make || "").trim().toLowerCase();
             const modelLower = (res.model || "").trim().toLowerCase();
             const textLower = (res.text || "").trim().toLowerCase();
@@ -85,6 +95,15 @@ export default function Dashboard() {
 
             return hasValidMake || hasValidModel || hasValidText;
           });
+
+        if (mode === "human") {
+          const newIds = filteredResults.map(r => r.text);
+          setUniqueHumans(prev => {
+            const nextSet = new Set(prev);
+            newIds.forEach(id => nextSet.add(id));
+            return nextSet;
+          });
+        }
 
         // Ekranda hayalet araç birikmemesi için ...prev yerine doğrudan yeni listeyi set ediyoruz (replace)
         setResults(filteredResults);
@@ -101,9 +120,11 @@ export default function Dashboard() {
     return () => {
       socket.close();
     };
-  }, [router]);
+  }, [router, mode]);
 
   useEffect(() => {
+    if (mode === "selection") return;
+
     let stream: MediaStream | null = null;
     let intervalId: NodeJS.Timeout;
 
@@ -158,7 +179,7 @@ export default function Dashboard() {
       }
       clearInterval(intervalId);
     };
-  }, [ws]);
+  }, [ws, mode]);
 
   const handleLogout = () => {
     localStorage.removeItem("alafvision_token");
@@ -211,90 +232,152 @@ export default function Dashboard() {
         </button>
       </header>
 
-      {/* Camera View */}
-      <main className="flex-1 relative bg-background flex items-center justify-center pt-20 pb-4 px-4 z-10">
-        <div className="w-full h-full max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl relative">
-          {!isStreaming && (
-            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
-              <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
-                <Video className="w-8 h-8 text-accent animate-pulse" />
-              </div>
-              <p className="font-medium text-secondary-text">Kamera başlatılıyor...</p>
-            </div>
-          )}
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover opacity-90 mix-blend-screen"
-          />
-          {isStreaming && (
-            <svg
-              className="absolute inset-0 w-full h-full object-cover z-20 pointer-events-none"
-              preserveAspectRatio="xMidYMid slice"
-              viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`}
+      {mode === "selection" ? (
+        <main className="flex-1 relative z-10 flex flex-col items-center justify-center p-6 mt-20">
+          <div className="max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+            <button
+              onClick={() => setMode("vehicle")}
+              className="flex flex-col items-center justify-center gap-6 p-12 bg-surface-1 border border-border-subtle rounded-[2rem] hover:border-accent hover:bg-surface-2 transition-all shadow-xl group text-center"
             >
-              {results.map((res) => {
-                const coords = getBoxCoords(res.box);
-                if (!coords) return null;
-                
-                // Sadece plakayı göster, eğer plaka yoksa label oluşturma
-                const hasPlate = res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "";
-                const label = hasPlate ? res.text.toUpperCase() : "";
+              <div className="w-24 h-24 rounded-3xl bg-accent-soft flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Car className="w-12 h-12 text-accent" />
+              </div>
+              <div>
+                <h3 className="text-3xl font-black text-primary-text mb-3">Demo Araç Tanıma</h3>
+                <p className="text-secondary-text font-medium leading-relaxed">
+                  Gelişmiş ALPR motorunu başlatarak plaka, marka ve renk tespiti yapın.
+                </p>
+              </div>
+            </button>
 
-                return (
-                  <g key={res.id}>
-                    <rect
-                      x={coords.x}
-                      y={coords.y}
-                      width={coords.w}
-                      height={coords.h}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      rx="8"
-                      className="text-accent drop-shadow-md"
-                    />
-                    {hasPlate && (
-                      <>
+            <button
+              onClick={() => setMode("human")}
+              className="flex flex-col items-center justify-center gap-6 p-12 bg-surface-1 border border-border-subtle rounded-[2rem] hover:border-blue-500 hover:bg-surface-2 transition-all shadow-xl group text-center"
+            >
+              <div className="w-24 h-24 rounded-3xl bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Users className="w-12 h-12 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="text-3xl font-black text-primary-text mb-3">Kişi Etiketleyip Sayma</h3>
+                <p className="text-secondary-text font-medium leading-relaxed">
+                  Çoklu model akışını başlatarak insanları tespit edin ve benzersiz ID'lerle sayın.
+                </p>
+              </div>
+            </button>
+          </div>
+        </main>
+      ) : (
+        <>
+          {/* Camera View */}
+          <main className="flex-1 relative bg-background flex items-center justify-center pt-20 pb-4 px-4 z-10">
+            <div className="w-full h-full max-h-[60vh] max-w-5xl mx-auto bg-surface-1 border border-border-subtle rounded-3xl overflow-hidden shadow-2xl relative">
+              {!isStreaming && (
+                <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
+                  <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
+                    <Video className="w-8 h-8 text-accent animate-pulse" />
+                  </div>
+                  <p className="font-medium text-secondary-text">Kamera başlatılıyor...</p>
+                </div>
+              )}
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover opacity-90 mix-blend-screen"
+              />
+              {isStreaming && (
+                <svg
+                  className="absolute inset-0 w-full h-full object-cover z-20 pointer-events-none"
+                  preserveAspectRatio="xMidYMid slice"
+                  viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`}
+                >
+                  {results.map((res) => {
+                    const coords = getBoxCoords(res.box);
+                    if (!coords) return null;
+                    
+                    let hasLabel = false;
+                    let label = "";
+                    let colorClass = "text-accent";
+                    
+                    if (mode === "human") {
+                      hasLabel = true;
+                      label = `ID: ${res.text}`;
+                      colorClass = "text-blue-500";
+                    } else {
+                      hasLabel = Boolean(res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "");
+                      label = hasLabel ? res.text.toUpperCase() : "";
+                      colorClass = "text-accent";
+                    }
+
+                    return (
+                      <g key={res.id}>
                         <rect
                           x={coords.x}
-                          y={coords.y - 30}
-                          width={Math.max(label.length * 10 + 16, 60)}
-                          height="30"
-                          fill="currentColor"
-                          rx="4"
-                          className="text-accent drop-shadow-md"
+                          y={coords.y}
+                          width={coords.w}
+                          height={coords.h}
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          rx="8"
+                          className={`${colorClass} drop-shadow-md`}
                         />
-                        <text
-                          x={coords.x + 8}
-                          y={coords.y - 10}
-                          fill="#ffffff"
-                          fontSize="16"
-                          fontWeight="bold"
-                          fontFamily="system-ui, sans-serif"
-                        >
-                          {label}
-                        </text>
-                      </>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-          )}
-          <canvas ref={canvasRef} className="hidden" />
-          
-          {/* Subtle overlay to make it fit dark theme better */}
-          
-        </div>
-      </main>
+                        {hasLabel && (
+                          <>
+                            <rect
+                              x={coords.x}
+                              y={coords.y - 30}
+                              width={Math.max(label.length * 10 + 16, 60)}
+                              height="30"
+                              fill="currentColor"
+                              rx="4"
+                              className={`${colorClass} drop-shadow-md`}
+                            />
+                            <text
+                              x={coords.x + 8}
+                              y={coords.y - 10}
+                              fill="#ffffff"
+                              fontSize="16"
+                              fontWeight="bold"
+                              fontFamily="system-ui, sans-serif"
+                            >
+                              {label}
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
+              <canvas ref={canvasRef} className="hidden" />
+              
+              {/* Subtle overlay to make it fit dark theme better */}
+              
+            </div>
+          </main>
 
-      {/* Results Feed */}
-      <div className="relative z-20 container mx-auto px-4 pb-4">
-        <PlateFeed results={results} />
-      </div>
+          {/* Results Feed */}
+          <div className="relative z-20 container mx-auto px-4 pb-4">
+            {mode === "human" ? (
+              <div className="w-full h-auto bg-surface-1 border border-border-subtle rounded-3xl p-8 shadow-xl flex flex-col md:flex-row items-center justify-around gap-8 animate-in slide-in-from-bottom-4 fade-in duration-500">
+                <div className="text-center flex-1">
+                  <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">ANLIK EKRANDA (TAKİP EDİLEN)</h3>
+                  <div className="text-6xl font-black text-primary-text">{results.length}</div>
+                </div>
+                <div className="hidden md:block w-px h-24 bg-border-subtle"></div>
+                <div className="text-center flex-1">
+                  <h3 className="text-lg font-bold text-secondary-text mb-3 tracking-wide">TOPLAM FARKLI KİŞİ SAYISI</h3>
+                  <div className="text-6xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</div>
+                </div>
+              </div>
+            ) : (
+              <PlateFeed results={results} />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
