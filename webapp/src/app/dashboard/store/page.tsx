@@ -2,8 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Video, Activity, Map, ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowLeft, Video, Activity, Map, ArrowRight, ArrowLeft as ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
+import * as faceapi from "face-api.js";
+import { db } from "../../../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 function getBoxCoords(box?: number[]) {
   if (!box || box.length === 0) return null;
@@ -24,7 +27,7 @@ export default function StoreDashboard() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   
   // Tripwire (Sanal Çizgi) state
-  const tripwireY = videoDimensions.height / 2; // Çizgi her zaman ekranın ortasında yatay
+  const tripwireX = videoDimensions.width * 0.7; // Dik çizgi, ekranın sağ %30'luk kısmında
 
   // Sayaçlar
   const [enteredCount, setEnteredCount] = useState(0);
@@ -32,6 +35,46 @@ export default function StoreDashboard() {
   
   // Geçiş takibi için önceki pozisyonlar
   const previousPositionsRef = useRef<Record<string, number>>({});
+  
+  // Yüz Tanıma state'leri
+  const [knownMap, setKnownMap] = useState<Record<string, string>>({});
+  const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const recognitionAttemptsRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+        ]);
+        console.log("Face-API models loaded in store dashboard!");
+      } catch (e) {
+        console.error("Model loading error:", e);
+      }
+    };
+
+    const fetchKnownFaces = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "known_faces"));
+        const faces: {name: string, customId?: string, descriptor: number[]}[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.name && data.descriptor) {
+            faces.push({ name: data.name, customId: data.customId, descriptor: data.descriptor });
+          }
+        });
+        knownFacesRef.current = faces;
+      } catch (e) {
+        console.error("Firebase fetch error:", e);
+      }
+    };
+
+    loadModels();
+    fetchKnownFaces();
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("alafvision_token");
@@ -63,29 +106,32 @@ export default function StoreDashboard() {
         // Sanal Kapı / Çizgi (Tripwire) Analizi
         filteredResults.forEach(res => {
           const coords = getBoxCoords(res.box);
+          
+          const isKnown = knownIdsRef.current.has(res.id);
+          const attempts = recognitionAttemptsRef.current[res.id] || 0;
+          const shouldAttemptRecognition = !isKnown && attempts < 5;
+
           if (coords) {
+            const centerX = coords.x + coords.w / 2;
             const centerY = coords.y + coords.h / 2;
-            const prevY = previousPositionsRef.current[res.id];
+            const prevX = previousPositionsRef.current[res.id];
             
-            if (prevY !== undefined) {
-              // Yukarıdan aşağıya geçiş (Giren)
-              if (prevY < tripwireY && centerY >= tripwireY) {
+            if (prevX !== undefined) {
+              // Soldan sağa geçiş (Giren)
+              if (prevX < tripwireX && centerX >= tripwireX) {
                 setEnteredCount(prev => prev + 1);
               }
-              // Aşağıdan yukarıya geçiş (Çıkan)
-              else if (prevY >= tripwireY && centerY < tripwireY) {
+              // Sağdan sola geçiş (Çıkan)
+              else if (prevX >= tripwireX && centerX < tripwireX) {
                 setExitedCount(prev => prev + 1);
               }
             }
-            previousPositionsRef.current[res.id] = centerY;
+            previousPositionsRef.current[res.id] = centerX;
 
             // Heatmap Çizimi
             if (heatmapCanvasRef.current && showHeatmap) {
               const ctx = heatmapCanvasRef.current.getContext("2d");
               if (ctx) {
-                const centerX = coords.x + coords.w / 2;
-                
-                // Opaklık bazlı yığılma (Isı Haritası efekti)
                 const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 30);
                 gradient.addColorStop(0, "rgba(255, 0, 0, 0.05)");
                 gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
@@ -94,6 +140,49 @@ export default function StoreDashboard() {
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
                 ctx.fill();
+              }
+            }
+
+            // --- Yüz Tanıma ---
+            if (shouldAttemptRecognition && videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+              const video = videoRef.current;
+              const cropCanvas = document.createElement("canvas");
+              const padding = 20;
+              const cropX = Math.max(0, coords.x - padding);
+              const cropY = Math.max(0, coords.y - padding);
+              const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+              const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+              cropCanvas.width = cropW;
+              cropCanvas.height = cropH;
+              const cropCtx = cropCanvas.getContext("2d");
+
+              if (cropCtx) {
+                cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                
+                recognitionAttemptsRef.current[res.id] = attempts + 1;
+                
+                setTimeout(async () => {
+                  try {
+                    const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
+                    if (detection && knownFacesRef.current.length > 0) {
+                      let bestMatch = { name: "", customId: "", distance: 1.0 };
+                      for (const known of knownFacesRef.current) {
+                        const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
+                        if (distance < bestMatch.distance) {
+                          bestMatch = { name: known.name, customId: known.customId || "", distance };
+                        }
+                      }
+                      if (bestMatch.distance < 0.58) {
+                        knownIdsRef.current.add(res.id);
+                        const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                        setKnownMap(prev => ({ ...prev, [res.id]: displayName }));
+                      }
+                    }
+                  } catch (e) {
+                    console.error("Face matching error:", e);
+                  }
+                }, 50);
               }
             }
           }
@@ -107,8 +196,12 @@ export default function StoreDashboard() {
 
     socket.onclose = () => setWs(null);
 
-    return () => socket.close();
-  }, [router, tripwireY, showHeatmap]);
+    return () => {
+      socket.close();
+      knownIdsRef.current.clear();
+      recognitionAttemptsRef.current = {};
+    };
+  }, [router, tripwireX, showHeatmap]);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
@@ -172,7 +265,7 @@ export default function StoreDashboard() {
       </header>
 
       <div className="flex-none w-full max-w-3xl mx-auto px-4 pt-4 pb-2 z-10 flex flex-col gap-3">
-        <div className="relative w-full aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative w-full aspect-[3/4] sm:aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
           {!isStreaming && (
             <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
               <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-border-subtle">
@@ -210,8 +303,8 @@ export default function StoreDashboard() {
           {isStreaming && (
             <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`} preserveAspectRatio="xMidYMid meet">
               {/* Tripwire (Sanal Kapı) */}
-              <line x1="0" y1={tripwireY} x2={videoDimensions.width} y2={tripwireY} stroke="#10b981" strokeWidth="4" strokeDasharray="10, 10" className="drop-shadow-lg opacity-80 animate-pulse" />
-              <text x={10} y={tripwireY - 10} fill="#10b981" fontSize="18" fontWeight="black" className="drop-shadow-md">SANAL KAPI (Tripwire)</text>
+              <line x1={tripwireX} y1="0" x2={tripwireX} y2={videoDimensions.height} stroke="#10b981" strokeWidth="4" strokeDasharray="10, 10" className="drop-shadow-lg opacity-80 animate-pulse" />
+              <text x={tripwireX + 10} y={30} fill="#10b981" fontSize="18" fontWeight="black" className="drop-shadow-md">SANAL KAPI</text>
               
               {/* Kişi Kutuları */}
               {results.map((res) => {
@@ -230,11 +323,16 @@ export default function StoreDashboard() {
 
                 // Kişi kutusunu çizerken, ısı haritası aktifse kutuları daha şeffaf yap
                 const boxOpacity = showHeatmap ? 0.3 : 1;
+
+                const knownName = knownMap[res.id];
+                const label = knownName ? knownName : `ID: ${res.id}`;
+                const colorHex = knownName ? "#a855f7" : "#10b981"; // Bilinen kişi ise mor, değilse zümrüt yeşili
                 
                 return (
                   <g key={res.id} opacity={boxOpacity}>
-                    <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke="#10b981" strokeWidth="3" rx="8" />
-                    <circle cx={finalX + finalW/2} cy={finalY + finalH/2} r="4" fill="#ffffff" />
+                    <rect x={finalX} y={finalY} width={finalW} height={finalH} fill="none" stroke={colorHex} strokeWidth="3" rx="8" />
+                    <rect x={finalX} y={finalY - 30} width={Math.max(label.length * 10 + 16, 60)} height="30" fill={colorHex} rx="4" className="drop-shadow-md" />
+                    <text x={finalX + 8} y={finalY - 10} fill="#ffffff" fontSize="16" fontWeight="bold" fontFamily="system-ui, sans-serif">{label}</text>
                   </g>
                 );
               })}
@@ -245,12 +343,12 @@ export default function StoreDashboard() {
         {/* Mağaza İstatistikleri (Kompakt Sayaç) */}
         <div className="w-full bg-surface-1 border border-border-subtle rounded-xl p-3 shadow-md flex justify-around items-center">
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-emerald-500 tracking-wider flex items-center gap-1"><ArrowDown size={12}/> İÇERİ GİREN</span>
+            <span className="text-[10px] font-bold text-emerald-500 tracking-wider flex items-center gap-1"><ArrowRight size={12}/> İÇERİ GİREN</span>
             <span className="text-2xl font-black text-emerald-500 drop-shadow-sm">{enteredCount}</span>
           </div>
           <div className="h-10 w-px bg-border-subtle"></div>
           <div className="flex flex-col items-center">
-            <span className="text-[10px] font-bold text-orange-500 tracking-wider flex items-center gap-1"><ArrowUp size={12}/> DIŞARI ÇIKAN</span>
+            <span className="text-[10px] font-bold text-orange-500 tracking-wider flex items-center gap-1"><ArrowLeftIcon size={12}/> DIŞARI ÇIKAN</span>
             <span className="text-2xl font-black text-orange-500 drop-shadow-sm">{exitedCount}</span>
           </div>
           <div className="h-10 w-px bg-border-subtle"></div>
@@ -266,7 +364,7 @@ export default function StoreDashboard() {
           <Activity size={48} className="text-emerald-500/50 mb-4" />
           <h3 className="text-xl font-bold text-primary-text mb-2">Canlı Analiz Aktif</h3>
           <p className="text-sm text-secondary-text max-w-sm">
-            Kamera üzerindeki yeşil kesik çizgi sanal bir kapı görevi görür. Kişilerin merkez noktası bu çizgiyi geçtiğinde giriş-çıkış sayaçları güncellenir.
+            Kamera üzerindeki dik yeşil kesik çizgi sanal bir kapı görevi görür. Kişilerin çizgiyi sağa veya sola geçişine göre giriş-çıkış sayaçları güncellenir.
           </p>
         </div>
       </div>
