@@ -3,6 +3,7 @@ package main
 /*
 #cgo CXXFLAGS: -std=c++11
 #cgo LDFLAGS: -lultimateALPR-SDK
+#cgo pkg-config: opencv4
 #include "alpr_wrapper.h"
 #include "human_tracker.h"
 #include <stdlib.h>
