@@ -49,7 +49,7 @@ char *HumanTrackerProcessFrame(const void *data, int size) {
   if (frame.empty())
     return strdup("[]");
 
-  const float CONFIDENCE_THRESHOLD = 0.60f;
+  const float CONFIDENCE_THRESHOLD = 0.50f;
   const float NMS_THRESHOLD = 0.45f;
   const int MAX_AGE = 90;
   const int CLASS_PERSON = 0;
