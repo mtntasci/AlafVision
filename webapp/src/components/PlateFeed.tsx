@@ -7,6 +7,7 @@ export interface PlateResult {
   make?: string;
   model?: string;
   color?: string;
+  box?: number[];
   timestamp: number;
 }
 

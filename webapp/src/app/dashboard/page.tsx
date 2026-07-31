@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import { Camera, LogOut, Video } from "lucide-react";
 import { PlateFeed, PlateResult } from "../../components/PlateFeed";
 
+function getBoxCoords(box?: number[]) {
+  if (!box || box.length === 0) return null;
+  if (box.length === 4) {
+    return { x: box[0], y: box[1], w: box[2], h: box[3] };
+  }
+  if (box.length >= 8) {
+    const minX = Math.min(box[0], box[2], box[4], box[6]);
+    const minY = Math.min(box[1], box[3], box[5], box[7]);
+    const maxX = Math.max(box[0], box[2], box[4], box[6]);
+    const maxY = Math.max(box[1], box[3], box[5], box[7]);
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+  }
+  return null;
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -12,6 +27,7 @@ export default function Dashboard() {
   const [ws, setWs] = useState<WebSocket | null>(null);
   const [results, setResults] = useState<PlateResult[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
 
   useEffect(() => {
     const token = localStorage.getItem("alafvision_token");
@@ -53,6 +69,7 @@ export default function Dashboard() {
               model: item.model || item.car?.model || "",
               color: item.color || item.car?.color || "",
               type: item.type || item.car?.type || item.class || "", // class veya type olabilir
+              box: item.car?.warpedBox || item.warpedBox || item.box || [],
               timestamp: Date.now(),
             } as PlateResult & { type?: string };
           })
@@ -97,7 +114,13 @@ export default function Dashboard() {
         });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setIsStreaming(true);
+          videoRef.current.onloadedmetadata = () => {
+            setVideoDimensions({
+              width: videoRef.current!.videoWidth,
+              height: videoRef.current!.videoHeight,
+            });
+            setIsStreaming(true);
+          };
         }
 
         // Send frames every 300ms (approx 3 frames per second)
@@ -206,6 +229,61 @@ export default function Dashboard() {
             muted
             className="w-full h-full object-cover opacity-90 mix-blend-screen"
           />
+          {isStreaming && (
+            <svg
+              className="absolute inset-0 w-full h-full object-cover z-20 pointer-events-none"
+              preserveAspectRatio="xMidYMid slice"
+              viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`}
+            >
+              {results.map((res) => {
+                const coords = getBoxCoords(res.box);
+                if (!coords) return null;
+                
+                // Sadece plakayı göster, eğer plaka yoksa label oluşturma
+                const hasPlate = res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "";
+                const label = hasPlate ? res.text.toUpperCase() : "";
+
+                return (
+                  <g key={res.id}>
+                    <rect
+                      x={coords.x}
+                      y={coords.y}
+                      width={coords.w}
+                      height={coords.h}
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      rx="8"
+                      className="text-accent drop-shadow-md"
+                    />
+                    {hasPlate && (
+                      <>
+                        <rect
+                          x={coords.x}
+                          y={coords.y - 30}
+                          width={Math.max(label.length * 10 + 16, 60)}
+                          height="30"
+                          fill="currentColor"
+                          rx="4"
+                          className="text-accent drop-shadow-md"
+                        />
+                        <text
+                          x={coords.x + 8}
+                          y={coords.y - 10}
+                          fill="#ffffff"
+                          fontSize="16"
+                          fontWeight="bold"
+                          fontFamily="system-ui, sans-serif"
+                        >
+                          {label}
+                        </text>
+                      </>
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          )}
           <canvas ref={canvasRef} className="hidden" />
           
           {/* Subtle overlay to make it fit dark theme better */}
