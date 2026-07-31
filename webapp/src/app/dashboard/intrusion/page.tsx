@@ -35,10 +35,10 @@ export default function IntrusionDashboard() {
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
   const [capturedSnapshots, setCapturedSnapshots] = useState<AnomalySnapshot[]>([]);
   const [knownMap, setKnownMap] = useState<Record<string, string>>({});
-  
+
   const seenHumansRef = useRef<Set<string>>(new Set());
   const triggeredAnomaliesRef = useRef<Set<string>>(new Set());
-  const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
+  const knownFacesRef = useRef<{ name: string, customId?: string, descriptor: number[] }[]>([]);
   const knownIdsRef = useRef<Set<string>>(new Set());
   const recognitionAttemptsRef = useRef<Record<string, number>>({});
 
@@ -61,7 +61,7 @@ export default function IntrusionDashboard() {
     const fetchKnownFaces = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "known_faces"));
-        const faces: {name: string, customId?: string, descriptor: number[]}[] = [];
+        const faces: { name: string, customId?: string, descriptor: number[] }[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           if (data.name && data.descriptor) {
@@ -143,9 +143,9 @@ export default function IntrusionDashboard() {
 
                 if (cropCtx) {
                   cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                  
+
                   recognitionAttemptsRef.current[res.text] = attempts + 1;
-                  
+
                   setTimeout(async () => {
                     try {
                       const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
@@ -269,7 +269,7 @@ export default function IntrusionDashboard() {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          
+
           canvas.toBlob((blob) => {
             if (blob) ws.send(blob);
           }, "image/jpeg", 0.7);
@@ -360,7 +360,7 @@ export default function IntrusionDashboard() {
                 const knownName = knownMap[res.text];
                 const label = knownName ? knownName : `ID: ${res.text}`;
                 let colorClass = "text-blue-500";
-                
+
                 const zoneX = (videoDimensions.width || 1) * 0.7;
                 const boxRight = coords.x + coords.w;
                 const overlapW = Math.max(0, Math.min(boxRight, videoDimensions.width || 1) - Math.max(coords.x, zoneX));
@@ -408,7 +408,7 @@ export default function IntrusionDashboard() {
             </span>
             İhlal Listesi
           </h3>
-          
+
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2">
             {capturedSnapshots.length > 0 ? (
               capturedSnapshots.map(snap => {
