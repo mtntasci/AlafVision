@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Video } from "lucide-react";
 import Link from "next/link";
+import * as faceapi from "face-api.js";
+import { db } from "../../../lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 function getBoxCoords(box?: number[]) {
   if (!box || box.length === 0) return null;
@@ -31,9 +34,51 @@ export default function LoiteringDashboard() {
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
   const [uniqueHumans, setUniqueHumans] = useState<Set<string>>(new Set());
   const [capturedSnapshots, setCapturedSnapshots] = useState<AnomalySnapshot[]>([]);
+  const [knownMap, setKnownMap] = useState<Record<string, string>>({});
+  
   const seenHumansRef = useRef<Set<string>>(new Set());
   const humanFirstSeenRef = useRef<Record<string, number>>({});
   const triggeredAnomaliesRef = useRef<Set<string>>(new Set());
+  const knownFacesRef = useRef<{name: string, customId?: string, descriptor: number[]}[]>([]);
+  const knownIdsRef = useRef<Set<string>>(new Set());
+  const recognitionAttemptsRef = useRef<Record<string, number>>({});
+
+  useEffect(() => {
+    // Face API Modellerini Yükle
+    const loadModels = async () => {
+      try {
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
+        ]);
+        console.log("Face-API models loaded in loitering dashboard!");
+      } catch (e) {
+        console.error("Model loading error:", e);
+      }
+    };
+
+    // Firebase'den kayıtlı yüzleri çek
+    const fetchKnownFaces = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "known_faces"));
+        const faces: {name: string, customId?: string, descriptor: number[]}[] = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          if (data.name && data.descriptor) {
+            faces.push({ name: data.name, customId: data.customId, descriptor: data.descriptor });
+          }
+        });
+        knownFacesRef.current = faces;
+        console.log(`Loaded ${faces.length} known faces from Firebase for Loitering.`);
+      } catch (e) {
+        console.error("Firebase fetch error:", e);
+      }
+    };
+
+    loadModels();
+    fetchKnownFaces();
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("alafvision_token");
@@ -72,6 +117,10 @@ export default function LoiteringDashboard() {
             hasNew = true;
           }
 
+          const isKnown = knownIdsRef.current.has(res.text);
+          const attempts = recognitionAttemptsRef.current[res.text] || 0;
+          const shouldAttemptRecognition = !isKnown && attempts < 5;
+
           if (!humanFirstSeenRef.current[res.text]) {
             humanFirstSeenRef.current[res.text] = now;
           }
@@ -85,7 +134,51 @@ export default function LoiteringDashboard() {
             const video = videoRef.current;
             const coords = getBoxCoords(res.box);
 
-            if (coords) {
+            if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+              // --- 1. Yüz Tanıma (En fazla 5 kere dener) ---
+              if (shouldAttemptRecognition) {
+                const cropCanvas = document.createElement("canvas");
+                const padding = 20;
+
+                const cropX = Math.max(0, coords.x - padding);
+                const cropY = Math.max(0, coords.y - padding);
+                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                const cropCtx = cropCanvas.getContext("2d");
+
+                if (cropCtx) {
+                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                  
+                  recognitionAttemptsRef.current[res.text] = attempts + 1;
+                  
+                  setTimeout(async () => {
+                    try {
+                      const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
+                      if (detection && knownFacesRef.current.length > 0) {
+                        let bestMatch = { name: "", customId: "", distance: 1.0 };
+                        for (const known of knownFacesRef.current) {
+                          const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
+                          if (distance < bestMatch.distance) {
+                            bestMatch = { name: known.name, customId: known.customId || "", distance };
+                          }
+                        }
+                        if (bestMatch.distance < 0.58) {
+                          knownIdsRef.current.add(res.text);
+                          const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                          setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
+                        }
+                      }
+                    } catch (e) {
+                      console.error("Face matching error:", e);
+                    }
+                  }, 50);
+                }
+              }
+
+              // --- 2. Şüpheli Bekleme İhlali (Loitering) ---
               if (durationMs > 20000) { // 20 seconds threshold
                 anomalyTriggered = true;
               }
@@ -94,32 +187,28 @@ export default function LoiteringDashboard() {
               if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
                 triggeredAnomaliesRef.current.add(anomalyKey);
 
-                if (video.videoWidth > 0 && video.videoHeight > 0) {
-                  const cropCanvas = document.createElement("canvas");
-                  const padding = 20;
+                const cropCanvas = document.createElement("canvas");
+                const padding = 20;
+                const cropX = Math.max(0, coords.x - padding);
+                const cropY = Math.max(0, coords.y - padding);
+                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+                cropCanvas.width = cropW;
+                cropCanvas.height = cropH;
+                const cropCtx = cropCanvas.getContext("2d");
 
-                  const cropX = Math.max(0, coords.x - padding);
-                  const cropY = Math.max(0, coords.y - padding);
-                  const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-                  const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+                if (cropCtx) {
+                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                  const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
 
-                  cropCanvas.width = cropW;
-                  cropCanvas.height = cropH;
-                  const cropCtx = cropCanvas.getContext("2d");
-
-                  if (cropCtx) {
-                    cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                    const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
-
-                    setCapturedSnapshots(prev => [{
-                      id: res.text,
-                      src: dataUrl,
-                      code: "TIME_EXCEED",
-                      message: "Bekleme Başlangıç",
-                      // Subtract 20 seconds to show when they started loitering
-                      timestamp: now - 20000, 
-                    }, ...prev]);
-                  }
+                  setCapturedSnapshots(prev => [{
+                    id: res.text,
+                    src: dataUrl,
+                    code: "TIME_EXCEED",
+                    message: "Bekleme Başlangıç",
+                    // Subtract 20 seconds to show when they started loitering
+                    timestamp: now - 20000, 
+                  }, ...prev]);
                 }
               }
             }
@@ -143,6 +232,8 @@ export default function LoiteringDashboard() {
       seenHumansRef.current.clear();
       triggeredAnomaliesRef.current.clear();
       humanFirstSeenRef.current = {};
+      knownIdsRef.current.clear();
+      recognitionAttemptsRef.current = {};
     };
   }, [router]);
 
@@ -259,7 +350,8 @@ export default function LoiteringDashboard() {
                   finalX = (videoDimensions.width || 1) - finalX - finalW;
                 }
 
-                const label = `ID: ${res.text}`;
+                const knownName = knownMap[res.text];
+                const label = knownName ? knownName : `ID: ${res.text}`;
                 let colorClass = "text-blue-500";
                 
                 const firstSeen = humanFirstSeenRef.current[res.text] || Date.now();
@@ -267,6 +359,8 @@ export default function LoiteringDashboard() {
                 
                 if (durationMs > 20000) {
                   colorClass = "text-orange-500";
+                } else if (knownName) {
+                  colorClass = "text-purple-500";
                 }
 
                 return (
@@ -309,23 +403,27 @@ export default function LoiteringDashboard() {
             {capturedSnapshots.length > 0 ? (
               capturedSnapshots.map(snap => {
                 const timeString = new Date(snap.timestamp).toLocaleTimeString('tr-TR');
+                const isKnown = !!knownMap[snap.id];
+                const labelName = knownMap[snap.id] || "BİLİNMEYEN İHLALCİ";
+
                 return (
                   <div key={`${snap.id}-${snap.timestamp}`} className="flex items-start gap-4 border rounded-xl p-2 transition-colors shadow-sm border-orange-500/40 bg-orange-500/5 hover:border-orange-500/80">
-                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-background shrink-0 border border-border-subtle">
+                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-background shrink-0 border border-border-subtle relative">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={snap.src} alt={`Anomaly ${snap.id}`} className="w-full h-full object-cover" />
                     </div>
-                    <div className="flex-1 flex flex-col gap-1 justify-center">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-orange-500 tracking-wider">
+                    <div className="flex-1 flex flex-col gap-1 justify-center min-w-0">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-[10px] font-black text-orange-500 tracking-wider truncate">
                           {snap.message}
                         </span>
-                        <span className="text-[10px] font-semibold text-secondary-text bg-surface-2 px-1.5 py-0.5 rounded border border-border-subtle shadow-sm">
+                        <span className="text-[10px] font-semibold text-secondary-text bg-surface-2 px-1.5 py-0.5 rounded border border-border-subtle shadow-sm whitespace-nowrap shrink-0">
                           {timeString}
                         </span>
                       </div>
                       <div className="flex items-center mt-1">
-                        <span className="text-xs font-bold text-primary-text bg-background px-2 py-0.5 rounded border border-border-subtle shadow-sm">
-                          ID: {snap.id}
+                        <span className="text-xs font-bold text-primary-text bg-background px-2 py-0.5 rounded border border-border-subtle shadow-sm truncate max-w-[200px]">
+                          {isKnown ? labelName : `ID: ${snap.id}`}
                         </span>
                       </div>
                     </div>
