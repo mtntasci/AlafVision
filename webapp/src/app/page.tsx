@@ -51,14 +51,14 @@ export default function Home() {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-primary-text max-w-5xl mx-auto leading-[1.1]">
-          Yapay Zeka ile Görüntü İşlemenin<br className="hidden md:block" />
+          Yapay Zeka ile Görüntü İşlemenin <br className="hidden md:block" />
           <span className="text-accent">
             Uç Noktası
           </span>
         </h1>
 
         <p className="text-lg md:text-xl text-secondary-text max-w-3xl mx-auto mb-10 leading-relaxed font-light">
-          İhtiyacınıza özel eğitilmiş yapay zeka modelleriyle kameralarınızı akıllı sensörlere dönüştürün. Perakendeden savunma sanayisine, veriyi dışarı çıkarmadan yerelde (Edge) analiz eden kaya gibi sağlam sistemler tasarlıyoruz.
+          İhtiyacınıza özel eğitilmiş yapay zeka modelleriyle kameralarınızı akıllı sensörlere dönüştürün. Perakendeden savunma sanayisine, veriyi dışarı çıkarmadan yerelde analiz eden sağlam sistemler tasarlıyoruz.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">
