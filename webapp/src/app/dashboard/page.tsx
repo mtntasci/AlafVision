@@ -32,16 +32,45 @@ export default function Dashboard() {
     socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        const newResult: PlateResult = {
-          id: Date.now().toString(),
-          text: data.text || "UNKNOWN",
-          make: data.make,
-          model: data.model,
-          color: data.color,
-          timestamp: Date.now(),
-        };
         
-        setResults((prev) => [newResult, ...prev]);
+        // Gelen veriyi diziye normalize edelim (tek obje, dizi veya plates dizisi olabilir)
+        let items: any[] = [];
+        if (Array.isArray(data)) {
+          items = data;
+        } else if (data.plates && Array.isArray(data.plates)) {
+          items = data.plates;
+        } else if (data.text || data.make || data.model) {
+          // Fallback for single flat object mock
+          items = [data];
+        }
+
+        const filteredResults: PlateResult[] = items
+          .map((item) => {
+            return {
+              id: item.id || Date.now().toString() + Math.random().toString(36).substring(7),
+              text: item.text || "UNKNOWN",
+              make: item.make || item.car?.make || "",
+              model: item.model || item.car?.model || "",
+              color: item.color || item.car?.color || "",
+              type: item.type || item.car?.type || item.class || "", // class veya type olabilir
+              timestamp: Date.now(),
+            } as PlateResult & { type?: string };
+          })
+          .filter((res) => {
+            const makeLower = (res.make || "").trim().toLowerCase();
+            const modelLower = (res.model || "").trim().toLowerCase();
+            const textLower = (res.text || "").trim().toLowerCase();
+
+            // Plaka, marka veya modelden en az biri geçerli (boş veya unknown değilse) olmalı
+            const hasValidMake = makeLower !== "" && makeLower !== "unknown" && makeLower !== "null";
+            const hasValidModel = modelLower !== "" && modelLower !== "unknown" && modelLower !== "null";
+            const hasValidText = textLower !== "" && textLower !== "unknown" && textLower !== "null";
+
+            return hasValidMake || hasValidModel || hasValidText;
+          });
+
+        // Ekranda hayalet araç birikmemesi için ...prev yerine doğrudan yeni listeyi set ediyoruz (replace)
+        setResults(filteredResults);
       } catch (e) {
         console.error("Error parsing message", e);
       }
