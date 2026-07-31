@@ -4,17 +4,22 @@ package main
 #cgo CXXFLAGS: -std=c++11
 #cgo LDFLAGS: -lultimateALPR-SDK
 #include "alpr_wrapper.h"
+#include "human_tracker.h"
 #include <stdlib.h>
 */
 import "C"
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/gorilla/websocket"
 )
+
+type contextKey string
+const engineKey contextKey = "engine"
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -35,12 +40,19 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}
 
-		if token != ValidBearerToken {
+		var engine string
+		// Yeni mimaride önek (prefix) üzerinden motor yönlendirmesi yapıyoruz
+		if strings.HasPrefix(token, "vehicle_") {
+			engine = "vehicle"
+		} else if strings.HasPrefix(token, "humanCounter_") {
+			engine = "human"
+		} else {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		next(w, r)
+		ctx := context.WithValue(r.Context(), engineKey, engine)
+		next(w, r.WithContext(ctx))
 	}
 }
 
@@ -52,7 +64,8 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	log.Println("Client connected to /stream")
+	engine, _ := r.Context().Value(engineKey).(string)
+	log.Printf("Client connected to /stream (Engine: %s)\n", engine)
 
 	for {
 		messageType, message, err := conn.ReadMessage()
@@ -61,24 +74,30 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// Only process binary messages (video frames)
+		// Sadece binary (video karesi) mesajları işle
 		if messageType == websocket.BinaryMessage {
-			// Convert Go byte slice to C void pointer
 			cData := C.CBytes(message)
 			cSize := C.int(len(message))
+			
+			var cResult *C.char
 
-			// Call C++ ALPR function
-			cResult := C.AlprProcessFrame(cData, cSize)
+			// Motora göre yönlendirme
+			if engine == "vehicle" {
+				cResult = C.AlprProcessFrame(cData, cSize)
+			} else if engine == "human" {
+				cResult = C.HumanTrackerProcessFrame(cData, cSize)
+			}
 			
 			if cResult != nil {
-				// Convert C string to Go string
 				goResult := C.GoString(cResult)
 				
-				// Free the C string and data
-				C.AlprFreeResult(cResult)
+				if engine == "vehicle" {
+					C.AlprFreeResult(cResult)
+				} else if engine == "human" {
+					C.HumanTrackerFreeResult(cResult)
+				}
 				C.free(cData)
 
-				// Send the JSON result back to the client
 				err = conn.WriteMessage(websocket.TextMessage, []byte(goResult))
 				if err != nil {
 					log.Println("Write error:", err)
@@ -95,13 +114,18 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	log.Println("Initializing ALPR Engine...")
-	// Init ALPR Engine (Call C function)
 	initRes := C.AlprInit()
 	if initRes != 0 {
 		log.Println("Failed to initialize ALPR Engine. (Make sure Doubango SDK is installed)")
-		// We continue anyway for boilerplate, but in production we might os.Exit(1)
 	} else {
 		log.Println("ALPR Engine Initialized Successfully.")
+	}
+
+	htInitRes := C.HumanTrackerInit()
+	if htInitRes != 0 {
+		log.Println("Failed to initialize Human Tracker Engine.")
+	} else {
+		log.Println("Human Tracker Engine Initialized Successfully.")
 	}
 
 	http.HandleFunc("/stream", authMiddleware(streamHandler))
