@@ -54,8 +54,9 @@ export default function RegisterFace() {
     setError(null);
 
     try {
-      // 1. Detect face and compute descriptor
-      const detection = await faceapi.detectSingleFace(imgRef.current).withFaceLandmarks().withFaceDescriptor();
+      // 1. Detect face and compute descriptor (lower confidence threshold for cropped images)
+      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 });
+      const detection = await faceapi.detectSingleFace(imgRef.current, options).withFaceLandmarks().withFaceDescriptor();
       
       if (!detection) {
         setError("Fotoğrafta net bir yüz tespit edilemedi. Lütfen daha belirgin, önden çekilmiş bir yüz fotoğrafı kullanın.");

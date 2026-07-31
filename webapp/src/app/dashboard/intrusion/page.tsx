@@ -148,7 +148,8 @@ export default function IntrusionDashboard() {
 
                   setTimeout(async () => {
                     try {
-                      const detection = await faceapi.detectSingleFace(cropCanvas).withFaceLandmarks().withFaceDescriptor();
+                      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 });
+                      const detection = await faceapi.detectSingleFace(cropCanvas, options).withFaceLandmarks().withFaceDescriptor();
                       if (detection && knownFacesRef.current.length > 0) {
                         let bestMatch = { name: "", customId: "", distance: 1.0 };
                         for (const known of knownFacesRef.current) {
