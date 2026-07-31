@@ -299,26 +299,24 @@ export default function Dashboard() {
               {isStreaming && (
                 <svg
                   className="absolute inset-0 w-full h-full z-20 pointer-events-none"
+                  viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`}
+                  preserveAspectRatio="xMidYMid meet"
                 >
                   {results.map((res) => {
                     const coords = getBoxCoords(res.box);
                     if (!coords || !videoRef.current) return null;
 
-                    // Yüzdelik (Percentage) sistem ile mobil uyumlu ölçeklendirme
-                    const origW = videoDimensions.width || 1;
-                    const origH = videoDimensions.height || 1;
-                    
-                    let pctX = (coords.x / origW) * 100;
-                    const pctY = (coords.y / origH) * 100;
-                    const pctW = (coords.w / origW) * 100;
-                    const pctH = (coords.h / origH) * 100;
+                    let finalX = coords.x;
+                    const finalY = coords.y;
+                    const finalW = coords.w;
+                    const finalH = coords.h;
 
                     // CSS transform check for mirroring
                     const style = window.getComputedStyle(videoRef.current);
                     const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
                     
                     if (isMirrored) {
-                      pctX = 100 - pctX - pctW;
+                      finalX = (videoDimensions.width || 1) - finalX - finalW;
                     }
                     
                     let hasLabel = false;
@@ -338,10 +336,10 @@ export default function Dashboard() {
                     return (
                       <g key={res.id}>
                         <rect
-                          x={`${pctX}%`}
-                          y={`${pctY}%`}
-                          width={`${pctW}%`}
-                          height={`${pctH}%`}
+                          x={finalX}
+                          y={finalY}
+                          width={finalW}
+                          height={finalH}
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="4"
@@ -351,8 +349,8 @@ export default function Dashboard() {
                         {hasLabel && (
                           <>
                             <rect
-                              x={`${pctX}%`}
-                              y={`calc(${pctY}% - 30px)`}
+                              x={finalX}
+                              y={finalY - 30}
                               width={Math.max(label.length * 10 + 16, 60)}
                               height="30"
                               fill="currentColor"
@@ -360,8 +358,8 @@ export default function Dashboard() {
                               className={`${colorClass} drop-shadow-md`}
                             />
                             <text
-                              x={`calc(${pctX}% + 8px)`}
-                              y={`calc(${pctY}% - 10px)`}
+                              x={finalX + 8}
+                              y={finalY - 10}
                               fill="#ffffff"
                               fontSize="16"
                               fontWeight="bold"
