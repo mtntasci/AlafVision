@@ -29,6 +29,7 @@ export default function VehicleDashboard() {
   const [results, setResults] = useState<PlateResult[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const [videoDimensions, setVideoDimensions] = useState({ width: 640, height: 480 });
+  const [frameDimensions, setFrameDimensions] = useState({ width: 640, height: 480 });
 
   // Compute unique plates
   const uniquePlates = new Set(results.map(r => r.text).filter(t => t && t !== "UNKNOWN"));
@@ -129,13 +130,40 @@ export default function VehicleDashboard() {
         const context = canvas.getContext("2d");
 
         if (context && video.videoWidth > 0 && video.videoHeight > 0) {
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
+          // Optimize for mobile and network: max width 1280, base scale 0.8
+          const MAX_WIDTH = 1280;
+          let scale = 0.8;
+          let targetWidth = video.videoWidth * scale;
+          let targetHeight = video.videoHeight * scale;
+          
+          if (targetWidth > MAX_WIDTH) {
+            scale = MAX_WIDTH / video.videoWidth;
+            targetWidth = MAX_WIDTH;
+            targetHeight = video.videoHeight * scale;
+          }
+
+          canvas.width = targetWidth;
+          canvas.height = targetHeight;
+          
+          // Update frame dimensions for SVG overlay alignment if changed
+          setFrameDimensions(prev => {
+            if (Math.abs(prev.width - targetWidth) > 1) {
+              return { width: targetWidth, height: targetHeight };
+            }
+            return prev;
+          });
+
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
           
           canvas.toBlob((blob) => {
-            if (blob) ws.send(blob);
-          }, "image/jpeg", 0.7);
+            if (blob && ws.readyState === WebSocket.OPEN) {
+              try {
+                ws.send(blob);
+              } catch (e) {
+                console.error("WebSocket send error", e);
+              }
+            }
+          }, "image/jpeg", 0.8);
         }
       }
     };
@@ -194,7 +222,7 @@ export default function VehicleDashboard() {
              }}
            />
            {isStreaming && (
-             <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox={`0 0 ${videoDimensions.width} ${videoDimensions.height}`} preserveAspectRatio="xMidYMid meet">
+             <svg className="absolute inset-0 w-full h-full z-20 pointer-events-none" viewBox={`0 0 ${frameDimensions.width} ${frameDimensions.height}`} preserveAspectRatio="xMidYMid meet">
                {results.map((res) => {
                  const coords = getBoxCoords(res.box);
                  if (!coords || !videoRef.current) return null;
@@ -205,7 +233,7 @@ export default function VehicleDashboard() {
                  const style = window.getComputedStyle(videoRef.current);
                  const isMirrored = style.transform.includes("matrix(-1") || style.transform.includes("scaleX(-1)");
                  if (isMirrored) {
-                   finalX = (videoDimensions.width || 1) - finalX - finalW;
+                   finalX = (frameDimensions.width || 1) - finalX - finalW;
                  }
                  const hasLabel = Boolean(res.text && res.text.toUpperCase() !== "UNKNOWN" && res.text.trim() !== "");
                  const label = hasLabel ? res.text.toUpperCase() : "";
