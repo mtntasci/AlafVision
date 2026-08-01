@@ -47,8 +47,6 @@ func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
 			engine = "vehicle"
 		} else if strings.HasPrefix(token, "humanCounter_") {
 			engine = "human"
-		} else if strings.HasPrefix(token, "ssh_") {
-			engine = "ssh"
 		} else {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
@@ -69,11 +67,6 @@ func streamHandler(w http.ResponseWriter, r *http.Request) {
 
 	engine, _ := r.Context().Value(engineKey).(string)
 	log.Printf("Client connected to /stream (Engine: %s)\n", engine)
-
-	if engine == "ssh" {
-		handleSSHConnection(conn)
-		return
-	}
 
 	for {
 		messageType, message, err := conn.ReadMessage()
@@ -146,6 +139,7 @@ func main() {
 	}
 
 	http.HandleFunc("/stream", authMiddleware(streamHandler))
+	http.HandleFunc("/ws/ssh", sshHttpHandler)
 
 	port := "8080"
 	log.Printf("Starting ALPR WebSocket server on :%s\n", port)
