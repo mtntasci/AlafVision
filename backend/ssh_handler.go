@@ -176,6 +176,18 @@ func handleSSHConnection(conn *websocket.Conn, ip string) {
 		}
 	}()
 
+	// Cloudflare Timeout'u Engellemek İçin 30 Saniyede Bir PING Gönder
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(time.Second*5)); err != nil {
+				break
+			}
+		}
+	}()
+
 	session.Wait()
 	conn.WriteMessage(websocket.TextMessage, []byte("\r\n\x1b[31m--- Disconnected ---\x1b[0m\r\n"))
 }
+
