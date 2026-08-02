@@ -289,7 +289,7 @@ export default function IntrusionDashboard() {
   }, [ws]);
 
   return (
-    <div className="h-[100dvh] bg-background flex flex-col relative overflow-hidden font-sans">
+    <div className="h-[100dvh] bg-background flex flex-col relative overflow-y-auto overflow-x-hidden font-sans">
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
         <div className="absolute inset-0 opacity-[0.02]" style={{ backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`, backgroundSize: `40px 40px` }} />
       </div>
@@ -309,7 +309,7 @@ export default function IntrusionDashboard() {
       </header>
 
       <div className="flex-none w-full max-w-3xl mx-auto px-4 pt-4 pb-2 z-10 flex flex-col gap-3">
-        <div className="relative w-full h-[45vh] sm:h-auto sm:aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
+        <div className="relative w-full aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
           {!isStreaming && (
             <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
               <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
@@ -400,8 +400,8 @@ export default function IntrusionDashboard() {
         </div>
       </div>
 
-      <div className="flex-1 w-full max-w-3xl mx-auto px-4 pb-4 min-h-0 z-10">
-        <div className="w-full h-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md flex flex-col">
+      <div className="flex-none w-full max-w-3xl mx-auto px-4 pb-4 z-10">
+        <div className="w-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md flex flex-col">
           <h3 className="flex-none text-sm font-bold text-primary-text mb-3 tracking-tight flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -410,7 +410,7 @@ export default function IntrusionDashboard() {
             İhlal Listesi
           </h3>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2">
+          <div className="overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2 h-[250px]">
             {capturedSnapshots.length > 0 ? (
               capturedSnapshots.map(snap => {
                 const timeString = new Date(snap.timestamp).toLocaleTimeString('tr-TR');
