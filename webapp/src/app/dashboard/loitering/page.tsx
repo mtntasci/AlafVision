@@ -87,149 +87,183 @@ export default function LoiteringDashboard() {
       return;
     }
 
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://visionapi.alafteknoloji.com/stream";
-    const socket = new WebSocket(`${socketUrl}?token=humanCounter_${token}`);
+    let socket: WebSocket | null = null;
+    let isMounted = true;
 
-    socket.onopen = () => {
-      console.log("WebSocket connected");
-      setWs(socket);
-    };
-
-    socket.onmessage = (event) => {
+    const connectToVision = async () => {
       try {
-        const data = JSON.parse(event.data);
-        let items: any[] = Array.isArray(data) ? data : [data];
-
-        const filteredResults = items
-          .map((item) => ({
-            id: item.id || Date.now().toString(),
-            text: item.id || "UNKNOWN",
-            box: item.box || [],
-          }))
-          .filter((res) => res.box && res.box.length > 0);
-
-        let hasNew = false;
-        const now = Date.now();
-
-        filteredResults.forEach((res) => {
-          if (!seenHumansRef.current.has(res.text)) {
-            seenHumansRef.current.add(res.text);
-            hasNew = true;
-          }
-
-          const isKnown = knownIdsRef.current.has(res.text);
-          const attempts = recognitionAttemptsRef.current[res.text] || 0;
-          const shouldAttemptRecognition = !isKnown && attempts < 5;
-
-          if (!humanFirstSeenRef.current[res.text]) {
-            humanFirstSeenRef.current[res.text] = now;
-          }
-
-          const firstSeen = humanFirstSeenRef.current[res.text];
-          const durationMs = now - firstSeen;
-
-          let anomalyTriggered = false;
-
-          if (videoRef.current) {
-            const video = videoRef.current;
-            const coords = getBoxCoords(res.box);
-
-            if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
-              // --- 1. Yüz Tanıma (En fazla 5 kere dener) ---
-              if (shouldAttemptRecognition) {
-                const cropCanvas = document.createElement("canvas");
-                const padding = 20;
-
-                const cropX = Math.max(0, coords.x - padding);
-                const cropY = Math.max(0, coords.y - padding);
-                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
-
-                cropCanvas.width = cropW;
-                cropCanvas.height = cropH;
-                const cropCtx = cropCanvas.getContext("2d");
-
-                if (cropCtx) {
-                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                  
-                  recognitionAttemptsRef.current[res.text] = attempts + 1;
-                  
-                  setTimeout(async () => {
-                    try {
-                      const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 });
-                      const detection = await faceapi.detectSingleFace(cropCanvas, options).withFaceLandmarks().withFaceDescriptor();
-                      if (detection && knownFacesRef.current.length > 0) {
-                        let bestMatch = { name: "", customId: "", distance: 1.0 };
-                        for (const known of knownFacesRef.current) {
-                          const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
-                          if (distance < bestMatch.distance) {
-                            bestMatch = { name: known.name, customId: known.customId || "", distance };
-                          }
-                        }
-                        if (bestMatch.distance < 0.58) {
-                          knownIdsRef.current.add(res.text);
-                          const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
-                          setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
-                        }
-                      }
-                    } catch (e) {
-                      console.error("Face matching error:", e);
-                    }
-                  }, 50);
-                }
-              }
-
-              // --- 2. Şüpheli Bekleme İhlali (Loitering) ---
-              if (durationMs > 20000) { // 20 seconds threshold
-                anomalyTriggered = true;
-              }
-
-              const anomalyKey = `${res.text}_TIME_EXCEED`;
-              if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
-                triggeredAnomaliesRef.current.add(anomalyKey);
-
-                const cropCanvas = document.createElement("canvas");
-                const padding = 20;
-                const cropX = Math.max(0, coords.x - padding);
-                const cropY = Math.max(0, coords.y - padding);
-                const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-                const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
-                cropCanvas.width = cropW;
-                cropCanvas.height = cropH;
-                const cropCtx = cropCanvas.getContext("2d");
-
-                if (cropCtx) {
-                  cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-                  const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
-
-                  setCapturedSnapshots(prev => [{
-                    id: res.text,
-                    src: dataUrl,
-                    code: "TIME_EXCEED",
-                    message: "Bekleme Başlangıç",
-                    // Subtract 20 seconds to show when they started loitering
-                    timestamp: now - 20000, 
-                  }, ...prev]);
-                }
-              }
-            }
+        const apiUrl = "https://jarvis.alafteknoloji.com/api/node";
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer ISKvoO-tVzlZHFCYYj75DhuMq6xSiwzOO0qISIoxK4Y"
           }
         });
 
-        if (hasNew) {
-          setUniqueHumans(new Set(seenHumansRef.current));
+        if (!response.ok) {
+          throw new Error(`API Hatası: ${response.status}`);
         }
 
-        setResults(filteredResults);
-      } catch (e) {
-        console.error("Error parsing message", e);
+        const data = await response.json();
+        const tunnelUrl = data.tunnelUrl;
+        
+        if (!isMounted) return;
+        
+        console.log(`Boşta olan node bulundu: ${tunnelUrl}. Bağlanılıyor...`);
+
+        const appKey = "Av_Xt2hEYiDjqLwy98XzeBdKO5SLZ4ihkt-vd9IK2Vk";
+        const wsUrl = `wss://${tunnelUrl}/ws/vision?appKey=${appKey}&token=humanCounter_${token}`;
+        
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          console.log("WebSocket connected to", tunnelUrl);
+          if (isMounted) setWs(socket);
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            let items: any[] = Array.isArray(data) ? data : [data];
+
+            const filteredResults = items
+              .map((item) => ({
+                id: item.id || Date.now().toString(),
+                text: item.id || "UNKNOWN",
+                box: item.box || [],
+              }))
+              .filter((res) => res.box && res.box.length > 0);
+
+            let hasNew = false;
+            const now = Date.now();
+
+            filteredResults.forEach((res) => {
+              if (!seenHumansRef.current.has(res.text)) {
+                seenHumansRef.current.add(res.text);
+                hasNew = true;
+              }
+
+              const isKnown = knownIdsRef.current.has(res.text);
+              const attempts = recognitionAttemptsRef.current[res.text] || 0;
+              const shouldAttemptRecognition = !isKnown && attempts < 5;
+
+              if (!humanFirstSeenRef.current[res.text]) {
+                humanFirstSeenRef.current[res.text] = now;
+              }
+
+              const firstSeen = humanFirstSeenRef.current[res.text];
+              const durationMs = now - firstSeen;
+
+              let anomalyTriggered = false;
+
+              if (videoRef.current) {
+                const video = videoRef.current;
+                const coords = getBoxCoords(res.box);
+
+                if (coords && video.videoWidth > 0 && video.videoHeight > 0) {
+                  if (shouldAttemptRecognition) {
+                    const cropCanvas = document.createElement("canvas");
+                    const padding = 20;
+
+                    const cropX = Math.max(0, coords.x - padding);
+                    const cropY = Math.max(0, coords.y - padding);
+                    const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                    const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+                    cropCanvas.width = cropW;
+                    cropCanvas.height = cropH;
+                    const cropCtx = cropCanvas.getContext("2d");
+
+                    if (cropCtx) {
+                      cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                      
+                      recognitionAttemptsRef.current[res.text] = attempts + 1;
+                      
+                      setTimeout(async () => {
+                        try {
+                          const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 });
+                          const detection = await faceapi.detectSingleFace(cropCanvas, options).withFaceLandmarks().withFaceDescriptor();
+                          if (detection && knownFacesRef.current.length > 0) {
+                            let bestMatch = { name: "", customId: "", distance: 1.0 };
+                            for (const known of knownFacesRef.current) {
+                              const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
+                              if (distance < bestMatch.distance) {
+                                bestMatch = { name: known.name, customId: known.customId || "", distance };
+                              }
+                            }
+                            if (bestMatch.distance < 0.58) {
+                              knownIdsRef.current.add(res.text);
+                              const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                              setKnownMap(prev => ({ ...prev, [res.text]: displayName }));
+                            }
+                          }
+                        } catch (e) {
+                          console.error("Face matching error:", e);
+                        }
+                      }, 50);
+                    }
+                  }
+
+                  if (durationMs > 20000) { 
+                    anomalyTriggered = true;
+                  }
+
+                  const anomalyKey = `${res.text}_TIME_EXCEED`;
+                  if (anomalyTriggered && !triggeredAnomaliesRef.current.has(anomalyKey)) {
+                    triggeredAnomaliesRef.current.add(anomalyKey);
+
+                    const cropCanvas = document.createElement("canvas");
+                    const padding = 20;
+                    const cropX = Math.max(0, coords.x - padding);
+                    const cropY = Math.max(0, coords.y - padding);
+                    const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                    const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+                    cropCanvas.width = cropW;
+                    cropCanvas.height = cropH;
+                    const cropCtx = cropCanvas.getContext("2d");
+
+                    if (cropCtx) {
+                      cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+                      const dataUrl = cropCanvas.toDataURL("image/jpeg", 0.9);
+
+                      setCapturedSnapshots(prev => [{
+                        id: res.text,
+                        src: dataUrl,
+                        code: "TIME_EXCEED",
+                        message: "Bekleme Başlangıç",
+                        timestamp: now - 20000, 
+                      }, ...prev]);
+                    }
+                  }
+                }
+              }
+            });
+
+            if (hasNew) {
+              setUniqueHumans(new Set(seenHumansRef.current));
+            }
+
+            setResults(filteredResults);
+          } catch (e) {
+            console.error("Error parsing message", e);
+          }
+        };
+
+        socket.onclose = () => {
+          if (isMounted) setWs(null);
+        };
+      } catch (err) {
+        console.error("Connection error:", err);
       }
     };
 
-    socket.onclose = () => setWs(null);
+    connectToVision();
 
     return () => {
-      socket.close();
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
       seenHumansRef.current.clear();
       triggeredAnomaliesRef.current.clear();
       humanFirstSeenRef.current = {};

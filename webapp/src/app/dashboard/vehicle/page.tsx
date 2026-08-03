@@ -41,61 +41,100 @@ export default function VehicleDashboard() {
       return;
     }
 
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://visionapi.alafteknoloji.com/stream";
-    const socket = new WebSocket(`${socketUrl}?token=vehicle_${token}`);
+    let socket: WebSocket | null = null;
+    let isMounted = true;
 
-    socket.onopen = () => {
-      console.log("WebSocket connected");
-      setWs(socket);
-    };
-
-    socket.onmessage = (event) => {
+    const connectToVision = async () => {
       try {
-        const data = JSON.parse(event.data);
-        let items: any[] = [];
-        if (Array.isArray(data)) {
-          items = data;
-        } else if (data.plates && Array.isArray(data.plates)) {
-          items = data.plates;
-        } else if (data.text || data.make || data.model) {
-          items = [data];
+        const apiUrl = "https://jarvis.alafteknoloji.com/api/node";
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer ISKvoO-tVzlZHFCYYj75DhuMq6xSiwzOO0qISIoxK4Y"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`API Hatası: ${response.status}`);
         }
 
-        const filteredResults: PlateResult[] = items
-          .map((item) => {
-            const resolvedId = item.id || Date.now().toString() + Math.random().toString(36).substring(7);
-            return {
-              id: resolvedId,
-              text: item.text || "UNKNOWN",
-              make: item.make || item.car?.make || "",
-              model: item.model || item.car?.model || "",
-              color: item.color || item.car?.color || "",
-              type: item.type || item.car?.type || item.class || "",
-              box: item.car?.warpedBox || item.warpedBox || item.box || [],
-              timestamp: Date.now(),
-            } as PlateResult;
-          })
-          .filter((res) => {
-            const makeLower = (res.make || "").trim().toLowerCase();
-            const modelLower = (res.model || "").trim().toLowerCase();
-            const textLower = (res.text || "").trim().toLowerCase();
+        const data = await response.json();
+        const tunnelUrl = data.tunnelUrl;
+        
+        if (!isMounted) return;
+        
+        console.log(`Boşta olan node bulundu: ${tunnelUrl}. Bağlanılıyor...`);
 
-            const hasValidMake = makeLower !== "" && makeLower !== "unknown" && makeLower !== "null";
-            const hasValidModel = modelLower !== "" && modelLower !== "unknown" && modelLower !== "null";
-            const hasValidText = textLower !== "" && textLower !== "unknown" && textLower !== "null";
+        const appKey = "Av_Xt2hEYiDjqLwy98XzeBdKO5SLZ4ihkt-vd9IK2Vk";
+        const wsUrl = `wss://${tunnelUrl}/ws/vision?appKey=${appKey}&token=vehicle_${token}`;
+        
+        socket = new WebSocket(wsUrl);
 
-            return hasValidMake || hasValidModel || hasValidText;
-          });
+        socket.onopen = () => {
+          console.log("WebSocket connected to", tunnelUrl);
+          if (isMounted) setWs(socket);
+        };
 
-        setResults(filteredResults);
-      } catch (e) {
-        console.error("Error parsing message", e);
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            let items: any[] = [];
+            if (Array.isArray(data)) {
+              items = data;
+            } else if (data.plates && Array.isArray(data.plates)) {
+              items = data.plates;
+            } else if (data.text || data.make || data.model) {
+              items = [data];
+            }
+
+            const filteredResults: PlateResult[] = items
+              .map((item) => {
+                const resolvedId = item.id || Date.now().toString() + Math.random().toString(36).substring(7);
+                return {
+                  id: resolvedId,
+                  text: item.text || "UNKNOWN",
+                  make: item.make || item.car?.make || "",
+                  model: item.model || item.car?.model || "",
+                  color: item.color || item.car?.color || "",
+                  type: item.type || item.car?.type || item.class || "",
+                  box: item.car?.warpedBox || item.warpedBox || item.box || [],
+                  timestamp: Date.now(),
+                } as PlateResult;
+              })
+              .filter((res) => {
+                const makeLower = (res.make || "").trim().toLowerCase();
+                const modelLower = (res.model || "").trim().toLowerCase();
+                const textLower = (res.text || "").trim().toLowerCase();
+
+                const hasValidMake = makeLower !== "" && makeLower !== "unknown" && makeLower !== "null";
+                const hasValidModel = modelLower !== "" && modelLower !== "unknown" && modelLower !== "null";
+                const hasValidText = textLower !== "" && textLower !== "unknown" && textLower !== "null";
+
+                return hasValidMake || hasValidModel || hasValidText;
+              });
+
+            setResults(filteredResults);
+          } catch (e) {
+            console.error("Error parsing message", e);
+          }
+        };
+
+        socket.onclose = () => {
+          if (isMounted) setWs(null);
+        };
+      } catch (err) {
+        console.error("Connection error:", err);
       }
     };
 
-    socket.onclose = () => setWs(null);
+    connectToVision();
 
-    return () => socket.close();
+    return () => {
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
+    };
   }, [router]);
 
   useEffect(() => {

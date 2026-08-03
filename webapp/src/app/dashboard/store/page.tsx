@@ -88,128 +88,165 @@ export default function StoreDashboard() {
       return;
     }
 
-    const socketUrl = process.env.NEXT_PUBLIC_WS_URL || "wss://visionapi.alafteknoloji.com/stream";
-    const socket = new WebSocket(`${socketUrl}?token=humanCounter_${token}`);
+    let socket: WebSocket | null = null;
+    let isMounted = true;
 
-    socket.onopen = () => {
-      console.log("WebSocket connected");
-      setWs(socket);
-    };
-
-    socket.onmessage = (event) => {
+    const connectToVision = async () => {
       try {
-        const data = JSON.parse(event.data);
-        let items: any[] = Array.isArray(data) ? data : [data];
-
-        const filteredResults = items
-          .map((item) => ({
-            id: item.text || item.id || Date.now().toString(),
-            box: item.box || [],
-          }))
-          .filter((res) => res.box && res.box.length > 0);
-
-        // Sanal Kapı / Çizgi (Tripwire) Analizi
-        filteredResults.forEach(res => {
-          const coords = getBoxCoords(res.box);
-
-          const isKnown = knownIdsRef.current.has(res.id);
-          const attempts = recognitionAttemptsRef.current[res.id] || 0;
-          const shouldAttemptRecognition = !isKnown && attempts < 5;
-
-          if (coords) {
-            const centerX = coords.x + coords.w / 2;
-            const centerY = coords.y + coords.h / 2;
-            const prevX = previousPositionsRef.current[res.id];
-
-            if (prevX !== undefined) {
-              // Soldan sağa geçiş (Giren)
-              if (prevX < tripwireX && centerX >= tripwireX) {
-                setEnteredCount(prev => prev + 1);
-                if (videoRef.current && videoRef.current.videoWidth > 0) {
-                  takeSnapshot(res.id, coords, videoRef.current, "ENTER");
-                }
-              }
-              // Sağdan sola geçiş (Çıkan)
-              else if (prevX >= tripwireX && centerX < tripwireX) {
-                setExitedCount(prev => prev + 1);
-                if (videoRef.current && videoRef.current.videoWidth > 0) {
-                  takeSnapshot(res.id, coords, videoRef.current, "EXIT");
-                }
-              }
-            }
-            previousPositionsRef.current[res.id] = centerX;
-
-            // Heatmap Çizimi
-            if (heatmapCanvasRef.current && showHeatmap) {
-              const ctx = heatmapCanvasRef.current.getContext("2d");
-              if (ctx) {
-                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 30);
-                gradient.addColorStop(0, "rgba(255, 0, 0, 0.05)");
-                gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
-
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
-                ctx.fill();
-              }
-            }
-
-            // --- Yüz Tanıma ---
-            if (shouldAttemptRecognition && videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
-              const video = videoRef.current;
-              const cropCanvas = document.createElement("canvas");
-              const padding = 20;
-              const cropX = Math.max(0, coords.x - padding);
-              const cropY = Math.max(0, coords.y - padding);
-              const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
-              const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
-
-              cropCanvas.width = cropW;
-              cropCanvas.height = cropH;
-              const cropCtx = cropCanvas.getContext("2d");
-
-              if (cropCtx) {
-                cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
-
-                recognitionAttemptsRef.current[res.id] = attempts + 1;
-
-                setTimeout(async () => {
-                  try {
-                    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 });
-                    const detection = await faceapi.detectSingleFace(cropCanvas, options).withFaceLandmarks().withFaceDescriptor();
-                    if (detection && knownFacesRef.current.length > 0) {
-                      let bestMatch = { name: "", customId: "", distance: 1.0 };
-                      for (const known of knownFacesRef.current) {
-                        const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
-                        if (distance < bestMatch.distance) {
-                          bestMatch = { name: known.name, customId: known.customId || "", distance };
-                        }
-                      }
-                      if (bestMatch.distance < 0.58) {
-                        knownIdsRef.current.add(res.id);
-                        const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
-                        setKnownMap(prev => ({ ...prev, [res.id]: displayName }));
-                      }
-                    }
-                  } catch (e) {
-                    console.error("Face matching error:", e);
-                  }
-                }, 50);
-              }
-            }
+        const apiUrl = "https://jarvis.alafteknoloji.com/api/node";
+        const response = await fetch(apiUrl, {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer ISKvoO-tVzlZHFCYYj75DhuMq6xSiwzOO0qISIoxK4Y"
           }
         });
 
-        setResults(filteredResults);
-      } catch (e) {
-        console.error("Error parsing message", e);
+        if (!response.ok) {
+          throw new Error(`API Hatası: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const tunnelUrl = data.tunnelUrl;
+        
+        if (!isMounted) return;
+        
+        console.log(`Boşta olan node bulundu: ${tunnelUrl}. Bağlanılıyor...`);
+
+        const appKey = "Av_Xt2hEYiDjqLwy98XzeBdKO5SLZ4ihkt-vd9IK2Vk";
+        const wsUrl = `wss://${tunnelUrl}/ws/vision?appKey=${appKey}&token=humanCounter_${token}`;
+        
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+          console.log("WebSocket connected to", tunnelUrl);
+          if (isMounted) setWs(socket);
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            let items: any[] = Array.isArray(data) ? data : [data];
+
+            const filteredResults = items
+              .map((item) => ({
+                id: item.text || item.id || Date.now().toString(),
+                box: item.box || [],
+              }))
+              .filter((res) => res.box && res.box.length > 0);
+
+            // Sanal Kapı / Çizgi (Tripwire) Analizi
+            filteredResults.forEach(res => {
+              const coords = getBoxCoords(res.box);
+
+              const isKnown = knownIdsRef.current.has(res.id);
+              const attempts = recognitionAttemptsRef.current[res.id] || 0;
+              const shouldAttemptRecognition = !isKnown && attempts < 5;
+
+              if (coords) {
+                const centerX = coords.x + coords.w / 2;
+                const centerY = coords.y + coords.h / 2;
+                const prevX = previousPositionsRef.current[res.id];
+
+                if (prevX !== undefined) {
+                  // Soldan sağa geçiş (Giren)
+                  if (prevX < tripwireX && centerX >= tripwireX) {
+                    setEnteredCount(prev => prev + 1);
+                    if (videoRef.current && videoRef.current.videoWidth > 0) {
+                      takeSnapshot(res.id, coords, videoRef.current, "ENTER");
+                    }
+                  }
+                  // Sağdan sola geçiş (Çıkan)
+                  else if (prevX >= tripwireX && centerX < tripwireX) {
+                    setExitedCount(prev => prev + 1);
+                    if (videoRef.current && videoRef.current.videoWidth > 0) {
+                      takeSnapshot(res.id, coords, videoRef.current, "EXIT");
+                    }
+                  }
+                }
+                previousPositionsRef.current[res.id] = centerX;
+
+                // Heatmap Çizimi
+                if (heatmapCanvasRef.current && showHeatmap) {
+                  const ctx = heatmapCanvasRef.current.getContext("2d");
+                  if (ctx) {
+                    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 30);
+                    gradient.addColorStop(0, "rgba(255, 0, 0, 0.05)");
+                    gradient.addColorStop(1, "rgba(255, 0, 0, 0)");
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                  }
+                }
+
+                // --- Yüz Tanıma ---
+                if (shouldAttemptRecognition && videoRef.current && videoRef.current.videoWidth > 0 && videoRef.current.videoHeight > 0) {
+                  const video = videoRef.current;
+                  const cropCanvas = document.createElement("canvas");
+                  const padding = 20;
+                  const cropX = Math.max(0, coords.x - padding);
+                  const cropY = Math.max(0, coords.y - padding);
+                  const cropW = Math.min(video.videoWidth - cropX, coords.w + padding * 2);
+                  const cropH = Math.min(video.videoHeight - cropY, coords.h + padding * 2);
+
+                  cropCanvas.width = cropW;
+                  cropCanvas.height = cropH;
+                  const cropCtx = cropCanvas.getContext("2d");
+
+                  if (cropCtx) {
+                    cropCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+
+                    recognitionAttemptsRef.current[res.id] = attempts + 1;
+
+                    setTimeout(async () => {
+                      try {
+                        const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.1 });
+                        const detection = await faceapi.detectSingleFace(cropCanvas, options).withFaceLandmarks().withFaceDescriptor();
+                        if (detection && knownFacesRef.current.length > 0) {
+                          let bestMatch = { name: "", customId: "", distance: 1.0 };
+                          for (const known of knownFacesRef.current) {
+                            const distance = faceapi.euclideanDistance(detection.descriptor, new Float32Array(known.descriptor));
+                            if (distance < bestMatch.distance) {
+                              bestMatch = { name: known.name, customId: known.customId || "", distance };
+                            }
+                          }
+                          if (bestMatch.distance < 0.58) {
+                            knownIdsRef.current.add(res.id);
+                            const displayName = bestMatch.customId ? `${bestMatch.name} (${bestMatch.customId})` : bestMatch.name;
+                            setKnownMap(prev => ({ ...prev, [res.id]: displayName }));
+                          }
+                        }
+                      } catch (e) {
+                        console.error("Face matching error:", e);
+                      }
+                    }, 50);
+                  }
+                }
+              }
+            });
+
+            setResults(filteredResults);
+          } catch (e) {
+            console.error("Error parsing message", e);
+          }
+        };
+
+        socket.onclose = () => {
+          if (isMounted) setWs(null);
+        };
+      } catch (err) {
+        console.error("Connection error:", err);
       }
     };
 
-    socket.onclose = () => setWs(null);
+    connectToVision();
 
     return () => {
-      socket.close();
+      isMounted = false;
+      if (socket) {
+        socket.close();
+      }
       knownIdsRef.current.clear();
       recognitionAttemptsRef.current = {};
     };
