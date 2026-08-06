@@ -41,15 +41,15 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         {/* Kartlar ve Bölmeler Rule: bg-surface-1, border-border-subtle, hover:border-border-subtle (if interactive, but here it's static) */}
-        <div className="bg-surface-2 border border-border-subtle rounded-2xl p-8 sm:p-10 shadow-xl">
+        <div className="glass-card p-8 sm:p-12 rounded-3xl border border-accent/30 shadow-[0_0_40px_rgba(0,240,255,0.08)] backdrop-blur-xl">
           <div className="text-center mb-10 flex flex-col items-center">
-            <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
+            <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-accent/30 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
               <Lock className="w-7 h-7 text-accent" />
             </div>
-            <h1 className="text-3xl font-bold text-primary-text mb-2 tracking-tight">
-              Alaf <span className="text-accent">Vision</span>
+            <h1 className="text-3xl font-extrabold text-primary-text mb-2 tracking-tight">
+              Alaf <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Vision</span>
             </h1>
-            <p className="text-secondary-text">Yönetim Paneli Girişi</p>
+            <p className="text-secondary-text font-mono text-sm">Yönetim Paneli Girişi</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
@@ -63,7 +63,7 @@ export default function LoginPage() {
                   placeholder="Kullanıcı Adı"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-md text-primary-text placeholder-secondary-text focus:outline-none focus:border-accent transition-colors"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-surface-1 border border-white/10 text-white placeholder-secondary-text focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                 />
               </div>
 
@@ -76,20 +76,20 @@ export default function LoginPage() {
                   placeholder="Şifre"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-md text-primary-text placeholder-secondary-text focus:outline-none focus:border-accent transition-colors"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-surface-1 border border-white/10 text-white placeholder-secondary-text focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm text-center font-medium">
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-xl text-sm text-center font-medium">
                 {error}
               </div>
             )}
 
             <button
               type="submit"
-              className="group w-full py-3.5 px-4 bg-accent hover:bg-accent-hover text-background rounded-md font-bold flex items-center justify-center gap-2 shadow-xl transition-colors active:scale-[0.98]"
+              className="group w-full py-4 px-6 bg-accent hover:bg-sky-400 text-background rounded-xl font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,240,255,0.3)] hover:shadow-[0_0_30px_rgba(0,240,255,0.6)] transition-all duration-300 active:scale-[0.98]"
             >
               Giriş Yap
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

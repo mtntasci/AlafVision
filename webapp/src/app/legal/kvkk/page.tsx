@@ -7,7 +7,7 @@ export default function KvkkPage() {
       <Navbar />
 
       <main className="flex-1 relative z-10 flex flex-col items-center py-20 px-4">
-        <article className="w-full max-w-4xl bg-surface-1 border border-border-subtle rounded-2xl p-8 md:p-12 shadow-xl">
+        <article className="w-full max-w-4xl glass-card border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-xl">
           <h1 className="text-3xl md:text-4xl font-bold text-primary-text mb-8 border-b border-border-subtle pb-6">KVKK Aydınlatma Metni</h1>
           
           <div className="space-y-6 text-secondary-text leading-relaxed">

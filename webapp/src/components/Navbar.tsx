@@ -18,18 +18,18 @@ export const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
 
 export function Navbar() {
   return (
-    <nav className="relative z-50 w-full border-b border-border-subtle bg-background">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3">
-          <Logo className="w-9 h-9" />
-          <span className="text-2xl font-bold tracking-tight text-primary-text">
-            Alaf <span className="text-accent">Vision</span>
+        <Link href="/" className="flex items-center gap-3 group">
+          <Logo className="w-9 h-9 transition-transform group-hover:scale-105" />
+          <span className="text-2xl font-extrabold tracking-tight text-primary-text">
+            Alaf <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Vision</span>
           </span>
         </Link>
         
         <Link 
           href="/login" 
-          className="px-5 py-2 text-sm font-bold text-background bg-accent hover:bg-accent-hover rounded-md transition-colors"
+          className="px-6 py-2.5 text-sm font-bold text-background bg-accent hover:bg-sky-400 rounded-xl shadow-[0_0_15px_rgba(0,240,255,0.35)] hover:shadow-[0_0_25px_rgba(0,240,255,0.7)] transition-all duration-300"
         >
           Müşteri Girişi
         </Link>
