@@ -64,14 +64,14 @@ export default function Home() {
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Link
             href="https://vision.alafteknoloji.com/login"
-            className="group relative inline-flex items-center justify-center gap-2 bg-accent text-primary-text px-8 py-4 rounded-xl font-semibold text-lg hover:bg-accent-soft transition-all duration-300 w-full sm:w-auto shadow-xl hover:shadow-xl"
+            className="group relative inline-flex items-center justify-center gap-2 bg-accent text-background font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent-hover transition-colors duration-300 w-full sm:w-auto shadow-xl"
           >
             Canlı Demo
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
           <a
             href="#cozumler"
-            className="group inline-flex items-center justify-center gap-2 bg-surface-2 text-primary-text px-8 py-4 rounded-xl font-semibold text-lg border border-border-subtle hover:bg-surface-2 transition-all duration-300 w-full sm:w-auto"
+            className="group inline-flex items-center justify-center gap-2 bg-surface-2 text-primary-text px-8 py-4 rounded-xl font-medium text-lg border border-border-subtle hover:bg-surface-3 transition-colors duration-300 w-full sm:w-auto"
           >
             Senaryoları Keşfedin
             <ChevronDown className="w-5 h-5 group-hover:translate-y-1 transition-transform text-secondary-text" />
@@ -91,8 +91,8 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-6xl mx-auto">
             {/* Perakende Analitiği */}
-            <div className="group p-8 rounded-3xl bg-surface-1 border border-border-subtle hover:border-border-subtle transition-all hover:bg-surface-2">
-              <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6">
+            <div className="group p-6 rounded-xl bg-surface-1 border border-border-subtle hover:border-accent transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
                 <Store className="w-7 h-7 text-accent" />
               </div>
               <h3 className="text-2xl font-bold text-primary-text mb-3">Perakende Analitiği</h3>
@@ -102,8 +102,8 @@ export default function Home() {
             </div>
 
             {/* Mağaza Güvenliği */}
-            <div className="group p-8 rounded-3xl bg-surface-1 border border-border-subtle hover:border-accent transition-all hover:bg-surface-2">
-              <div className="w-14 h-14 rounded-2xl bg-surface-2 flex items-center justify-center mb-6">
+            <div className="group p-6 rounded-xl bg-surface-1 border border-border-subtle hover:border-accent transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
                 <Eye className="w-7 h-7 text-accent" />
               </div>
               <h3 className="text-2xl font-bold text-primary-text mb-3">Mağaza Güvenliği</h3>
@@ -113,8 +113,8 @@ export default function Home() {
             </div>
 
             {/* Akıllı Şehir & Trafik */}
-            <div className="group p-8 rounded-3xl bg-surface-1 border border-border-subtle hover:border-accent transition-all hover:bg-surface-2">
-              <div className="w-14 h-14 rounded-2xl bg-surface-2 flex items-center justify-center mb-6">
+            <div className="group p-6 rounded-xl bg-surface-1 border border-border-subtle hover:border-accent transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
                 <Car className="w-7 h-7 text-accent" />
               </div>
               <h3 className="text-2xl font-bold text-primary-text mb-3">Akıllı Şehir & Trafik</h3>
@@ -124,8 +124,8 @@ export default function Home() {
             </div>
 
             {/* Endüstriyel Tesisler */}
-            <div className="group p-8 rounded-3xl bg-surface-1 border border-border-subtle hover:border-accent transition-all hover:bg-surface-2">
-              <div className="w-14 h-14 rounded-2xl bg-surface-2 flex items-center justify-center mb-6">
+            <div className="group p-6 rounded-xl bg-surface-1 border border-border-subtle hover:border-accent transition-colors">
+              <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
                 <Factory className="w-7 h-7 text-accent" />
               </div>
               <h3 className="text-2xl font-bold text-primary-text mb-3">Endüstriyel Tesisler</h3>
@@ -196,7 +196,7 @@ export default function Home() {
               <p className="text-sm text-secondary-text">Bağlantı kopsa bile yerel sistem çalışmaya ve kaydetmeye devam eder.</p>
             </div>
             <div className="p-6">
-              <Network className="w-8 h-8 text-purple-500 mb-4" />
+              <Network className="w-8 h-8 text-accent mb-4" />
               <h4 className="text-primary-text font-bold mb-2">Bant Genişliği Tasarrufu</h4>
               <p className="text-sm text-secondary-text">Video aktarımı olmadığı için ağ altyapınızı yormaz, maliyetleri düşürür.</p>
             </div>
@@ -210,7 +210,7 @@ export default function Home() {
       </section>
 
       {/* --- 4. GÜVENİLİRLİK (TRUST SECTION) --- */}
-      <section id="guvenilirlik" className="relative z-10 py-24 bg-surface-1/80">
+      <section id="guvenilirlik" className="relative z-10 py-24 bg-surface-1">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto bg-surface-1 rounded-3xl p-10 md:p-14 border border-border-subtle relative overflow-hidden shadow-2xl">
             {/* Background Icon */}

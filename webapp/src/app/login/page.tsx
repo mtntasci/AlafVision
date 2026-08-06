@@ -41,9 +41,8 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
         {/* Kartlar ve Bölmeler Rule: bg-surface-1, border-border-subtle, hover:border-border-subtle (if interactive, but here it's static) */}
-        <div className="bg-surface-1 border border-border-subtle rounded-3xl p-10 shadow-2xl backdrop-blur-xl">
+        <div className="bg-surface-2 border border-border-subtle rounded-2xl p-8 sm:p-10 shadow-xl">
           <div className="text-center mb-10 flex flex-col items-center">
-            {/* Logo placeholder icon styled per AGENTS.md */}
             <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-border-subtle">
               <Lock className="w-7 h-7 text-accent" />
             </div>
@@ -64,7 +63,7 @@ export default function LoginPage() {
                   placeholder="Kullanıcı Adı"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-xl text-primary-text placeholder-secondary-text focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent transition-all hover:bg-background"
+                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-md text-primary-text placeholder-secondary-text focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
 
@@ -77,21 +76,20 @@ export default function LoginPage() {
                   placeholder="Şifre"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-xl text-primary-text placeholder-secondary-text focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent transition-all hover:bg-background"
+                  className="w-full pl-12 pr-4 py-3.5 bg-background border border-border-subtle rounded-md text-primary-text placeholder-secondary-text focus:outline-none focus:border-accent transition-colors"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="text-accent text-sm text-center font-medium bg-accent-soft py-3 rounded-xl border border-border-subtle">
+              <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-md text-sm text-center font-medium">
                 {error}
               </div>
             )}
 
-            {/* Primary Button Rule */}
             <button
               type="submit"
-              className="group w-full py-3.5 px-4 bg-accent hover:bg-accent-soft text-primary-text rounded-xl font-semibold flex items-center justify-center gap-2 shadow-xl transition-all duration-300 active:scale-[0.98]"
+              className="group w-full py-3.5 px-4 bg-accent hover:bg-accent-hover text-background rounded-md font-bold flex items-center justify-center gap-2 shadow-xl transition-colors active:scale-[0.98]"
             >
               Giriş Yap
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

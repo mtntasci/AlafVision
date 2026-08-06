@@ -348,7 +348,7 @@ export default function IntrusionDashboard() {
       <div className="flex-none w-full max-w-3xl mx-auto px-4 pt-4 pb-2 z-10 flex flex-col gap-3">
         <div className="relative w-full aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
           {!isStreaming && (
-            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
+            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1">
               <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
                 <Video className="w-8 h-8 text-accent animate-pulse" />
               </div>
@@ -397,7 +397,7 @@ export default function IntrusionDashboard() {
 
                 const knownName = knownMap[res.text];
                 const label = knownName ? knownName : `ID: ${res.text}`;
-                let colorClass = "text-blue-500";
+                let colorClass = "text-accent";
 
                 const zoneX = (videoDimensions.width || 1) * 0.7;
                 const boxRight = coords.x + coords.w;
@@ -432,7 +432,7 @@ export default function IntrusionDashboard() {
           <div className="h-8 w-px bg-border-subtle"></div>
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-bold text-secondary-text tracking-wider">BENZERSİZ KİŞİ</span>
-            <span className="text-xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</span>
+            <span className="text-xl font-black text-accent drop-shadow-sm">{uniqueHumans.size}</span>
           </div>
         </div>
       </div>

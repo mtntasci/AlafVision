@@ -1,21 +1,20 @@
-# Alaf Vision Tasarım ve Mimari Kuralları
+# Alaf Teknoloji Agent Kuralları
 
-1. Tasarım Sistemi (Design System):
-- Kurumsal renkler, tipografi ve tasarım tokenları (CSS Variables) hakkında detaylı kurallar `docs/design-system.md` dosyasında bulunmaktadır.
-- Ana renk artık mavi DEĞİL, kurumsal turuncudur (`--color-accent` veya `bg-accent`).
-- Arka planlar için `slate-950` veya `blue-900/10` gibi spesifik değerler YERİNE, `bg-background`, `bg-surface-1`, `bg-surface-2`, `bg-surface-3` tokenları kullanılmalıdır.
+Herhangi bir geliştirme veya değişiklik görevine **başlamadan önce**, aşağıdaki güncel kural dosyalarının içeriklerini (`read_url_content` aracını veya `curl` komutunu kullanarak) web üzerinden çekip dikkatle okumalısın. Bu kuralları okumadan ve anlamadan hiçbir kod değişikliği veya yeni bir implementasyon yapmamalısın.
 
-2. Component Standartları:
-- Buton, kart, form ve badge standartları `docs/component-standards.md` içerisinde detaylandırılmıştır.
-- Her türlü yeni UI elementi bu standartlara sıkı sıkıya uymalıdır. "Glassmorphism" mantığı bırakılmış, "Solid Surface" mantığına geçilmiştir. Kartların kenarlıkları sadece ince `border-border-subtle` olmalıdır.
+## Temel Kural Kaynakları:
 
-3. Sayfa Yapısı ve Responsive Davranış:
-- Responsive kurallar ve grid yapısı `docs/responsive-guidelines.md` içerisinde yer almaktadır.
-- Ana sayfada 5 ana bölüm (Navbar, Hero, Özellikler, Akış, Kurumsal Vurgu, Mega Footer) konsepti devam etmektedir ancak görsel dil olarak yeni tasarım tokenları kullanılmalıdır.
+1. **Firebase Kuralları:**
+   [https://www.alafteknoloji.com/rules/ai-firebase-rules.md](https://www.alafteknoloji.com/rules/ai-firebase-rules.md)
 
-4. UI & Davranış (UX) Kuralları:
-- Aksini belirtmediğim sürece Popup/Modal KULLANILMAYACAKTIR.
-- Her türlü yeni işlem/form/görünüm için yeni sayfa (route) yapılarak oluşturulacaktır.
+2. **Kurulum ve Setup Kuralları:**
+   [https://www.alafteknoloji.com/rules/ai-installation-rules.md](https://www.alafteknoloji.com/rules/ai-installation-rules.md)
 
-5. Geliştirme Süreci Kuralları:
-- Kesinlikle hatasız bir build (`npm run build`) almadan "tamamlandı" demeyin. Yaptığınız değişikliklerin projeyi bozmadığından emin olmak için her büyük güncelleme sonrasında build alıp doğrulayın.
+3. **Görsel ve Tasarım (UI/UX) Kuralları:**
+   [https://www.alafteknoloji.com/rules/ai-visual-rules.md](https://www.alafteknoloji.com/rules/ai-visual-rules.md)
+
+4. **Next.js Mimari ve Geliştirme Kuralları:**
+   [https://www.alafteknoloji.com/rules/ai-nextjs-rules.md](https://www.alafteknoloji.com/rules/ai-nextjs-rules.md)
+
+### Uygulama Yönergesi
+Bir göreve başlarken, görevin bağlamıyla ilgili olanları veya emin değilsen hepsini çek ve bu kuralların projeye nasıl yansıması gerektiğini analiz et. Kural dosyalarında yazan yönergeler, bu projedeki geliştirme standartlarını belirler ve harfiyen uyulması zorunludur.

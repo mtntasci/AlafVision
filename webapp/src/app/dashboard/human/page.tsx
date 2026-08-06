@@ -343,7 +343,7 @@ export default function HumanDashboard() {
           <span className="text-xl font-bold tracking-tight text-primary-text hidden sm:inline-block">
             Alaf <span className="text-accent">Vision</span>
           </span>
-          <span className="flex items-center gap-1.5 ml-2 px-3 py-1 rounded-full bg-blue-500/10 border border-border-subtle text-blue-500 text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
+          <span className="flex items-center gap-1.5 ml-2 px-3 py-1 rounded-full bg-accent-soft border border-border-subtle text-accent text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
             Kişi Etiketleyip Sayma
           </span>
         </div>
@@ -352,7 +352,7 @@ export default function HumanDashboard() {
       <div className="flex-none w-full max-w-3xl mx-auto px-4 pt-4 pb-2 z-10 flex flex-col gap-3">
         <div className="relative w-full h-[45vh] sm:h-auto sm:aspect-video bg-surface-1 border border-border-subtle rounded-2xl overflow-hidden shadow-lg">
           {!isStreaming && (
-            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1/80 backdrop-blur-sm">
+            <div className="absolute inset-0 flex items-center justify-center text-secondary-text z-10 flex-col gap-4 bg-surface-1">
               <div className="w-16 h-16 rounded-2xl bg-accent-soft flex items-center justify-center border border-border-subtle">
                 <Video className="w-8 h-8 text-accent animate-pulse" />
               </div>
@@ -392,7 +392,7 @@ export default function HumanDashboard() {
                 const knownName = knownMap[res.text];
                 const label = knownName ? knownName : `ID: ${res.text}`;
                 const isFighting = fightingIds.has(res.id);
-                const boxColor = isFighting ? "text-red-500" : (knownName ? "text-purple-500" : "text-blue-500");
+                const boxColor = isFighting ? "text-red-500" : (knownName ? "text-purple-500" : "text-accent");
 
                 return (
                   <g key={res.id}>
@@ -416,7 +416,7 @@ export default function HumanDashboard() {
           <div className="h-8 w-px bg-border-subtle"></div>
           <div className="flex flex-col items-center">
             <span className="text-[10px] font-bold text-secondary-text tracking-wider">BENZERSİZ KİŞİ</span>
-            <span className="text-xl font-black text-blue-500 drop-shadow-sm">{uniqueHumans.size}</span>
+            <span className="text-xl font-black text-accent drop-shadow-sm">{uniqueHumans.size}</span>
           </div>
         </div>
       </div>
@@ -425,8 +425,8 @@ export default function HumanDashboard() {
         <div className="w-full h-full bg-surface-1 border border-border-subtle rounded-2xl p-4 shadow-md flex flex-col">
           <h3 className="flex-none text-sm font-bold text-primary-text mb-3 tracking-tight flex items-center gap-2">
             <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-accent"></span>
             </span>
             Tespit Edilen Kişiler
           </h3>
@@ -439,14 +439,14 @@ export default function HumanDashboard() {
                 const labelName = knownMap[snap.id] || "YENİ KİŞİ";
                 
                 return (
-                  <div key={`${snap.id}-${snap.timestamp}`} className={`flex items-start gap-4 border rounded-xl p-2 transition-colors shadow-sm ${isKnown ? 'border-purple-500/40 bg-purple-500/5 hover:border-purple-500/80' : 'border-blue-500/40 bg-blue-500/5 hover:border-blue-500/80'}`}>
+                  <div key={`${snap.id}-${snap.timestamp}`} className={`flex items-start gap-4 border rounded-xl p-2 transition-colors shadow-sm ${isKnown ? 'border-purple-500/40 bg-purple-500/5 hover:border-purple-500/80' : 'border-accent/40 bg-accent-soft hover:border-accent'}`}>
                     <div className="w-14 h-14 rounded-lg overflow-hidden bg-background shrink-0 border border-border-subtle relative group">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={snap.src} alt={`Person ${snap.id}`} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 flex flex-col gap-1 justify-center min-w-0">
                       <div className="flex justify-between items-center gap-2">
-                        <span className={`text-[10px] font-black truncate tracking-wider ${isKnown ? 'text-purple-500' : 'text-blue-500'}`}>
+                        <span className={`text-[10px] font-black truncate tracking-wider ${isKnown ? 'text-purple-500' : 'text-accent'}`}>
                           {isKnown ? "BİLİNEN KİŞİ" : "YABANCI KİŞİ"}
                         </span>
                         <span className="text-[10px] font-semibold text-secondary-text bg-surface-2 px-1.5 py-0.5 rounded border border-border-subtle shadow-sm whitespace-nowrap shrink-0">
@@ -464,7 +464,7 @@ export default function HumanDashboard() {
                               localStorage.setItem("alafvision_register_img", snap.src);
                               router.push("/dashboard/human/register");
                             }}
-                            className="flex items-center gap-1 text-[10px] font-bold text-white bg-blue-500 hover:bg-blue-600 px-2 py-1 rounded shadow-sm transition-colors"
+                            className="flex items-center gap-1 text-[10px] font-bold text-background bg-accent hover:bg-accent-hover px-2 py-1 rounded-md shadow-sm transition-colors"
                           >
                             <UserPlus size={12} />
                             <span>Tanıt</span>

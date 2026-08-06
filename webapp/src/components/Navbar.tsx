@@ -18,7 +18,7 @@ export const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
 
 export function Navbar() {
   return (
-    <nav className="relative z-50 w-full border-b border-border-subtle bg-background/80 backdrop-blur-xl">
+    <nav className="relative z-50 w-full border-b border-border-subtle bg-background">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Logo className="w-9 h-9" />

@@ -113,8 +113,8 @@ export default function RegisterFace() {
             </p>
           </div>
         ) : (
-          <div className="bg-surface-1 border border-border-subtle rounded-2xl shadow-xl overflow-hidden">
-            <div className="p-6 border-b border-border-subtle flex flex-col items-center bg-surface-2/50">
+          <div className="bg-surface-2 border border-border-subtle rounded-2xl shadow-xl overflow-hidden">
+            <div className="p-6 border-b border-border-subtle flex flex-col items-center bg-surface-1/50">
               {imageSrc ? (
                 <div className="w-48 h-48 rounded-2xl overflow-hidden border-4 border-border-subtle shadow-md bg-background relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -132,32 +132,32 @@ export default function RegisterFace() {
 
             <div className="p-6 flex flex-col gap-4">
               {error && (
-                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-start gap-3">
+                <div className="p-3 rounded-md bg-red-500/10 border border-red-500/50 flex items-start gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                   <p className="text-sm font-medium text-red-500">{error}</p>
                 </div>
               )}
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-bold text-primary-text ml-1">Kişinin Adı Soyadı</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-secondary-text mb-1 block">Kişinin Adı Soyadı</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Örn: Mehmet Yılmaz"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border-subtle text-primary-text font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  className="w-full px-4 py-2 rounded-md bg-background border border-border-subtle text-primary-text font-normal focus:outline-none focus:border-accent transition-colors"
                   disabled={isProcessing}
                 />
               </div>
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-bold text-primary-text ml-1">Özel ID (Opsiyonel)</label>
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-secondary-text mb-1 block">Özel ID (Opsiyonel)</label>
                 <input
                   type="text"
                   value={customId}
                   onChange={(e) => setCustomId(e.target.value)}
                   placeholder="Örn: MT-1001 veya EMP450"
-                  className="w-full px-4 py-3 rounded-xl bg-background border border-border-subtle text-primary-text font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+                  className="w-full px-4 py-2 rounded-md bg-background border border-border-subtle text-primary-text font-normal focus:outline-none focus:border-accent transition-colors"
                   disabled={isProcessing}
                 />
               </div>
@@ -165,11 +165,11 @@ export default function RegisterFace() {
               <button
                 onClick={handleRegister}
                 disabled={isProcessing || !imageSrc}
-                className="mt-4 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-accent text-white font-bold hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
+                className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-md bg-accent text-background font-bold hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               >
                 {isProcessing ? (
                   <>
-                    <span className="animate-spin border-2 border-white/30 border-t-white rounded-full w-5 h-5"></span>
+                    <span className="animate-spin border-2 border-background/30 border-t-background rounded-full w-5 h-5"></span>
                     <span>Yüz Analiz Ediliyor...</span>
                   </>
                 ) : (
