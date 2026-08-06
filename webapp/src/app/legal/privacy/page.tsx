@@ -1,7 +1,12 @@
+"use client";
+
 import { Navbar } from "../../../components/Navbar";
 import { Footer } from "../../../components/Footer";
+import { useBrand } from "../../../lib/brand";
 
 export default function PrivacyPolicyPage() {
+  const brand = useBrand();
+
   return (
     <div className="min-h-screen bg-background text-primary-text selection:bg-accent-soft/30 font-sans overflow-x-hidden flex flex-col">
       <Navbar />
@@ -10,13 +15,13 @@ export default function PrivacyPolicyPage() {
         <article className="w-full max-w-4xl glass-card border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-xl">
           <h1 className="text-3xl md:text-4xl font-bold text-primary-text mb-8 border-b border-border-subtle pb-6">Gizlilik Politikası</h1>
           
-          <div className="space-y-6 text-secondary-text leading-relaxed">
+          <div className="space-y-6 text-secondary-text leading-relaxed font-light">
             <p>
               <strong>Son Güncelleme:</strong> {new Date().toLocaleDateString('tr-TR')}
             </p>
             
             <p>
-              Alaf Teknoloji ("Alaf Vision" olarak anılacaktır), müşteri ve kullanıcılarının gizliliğine en yüksek düzeyde önem vermektedir. 
+              {brand.companyName} ("{brand.fullName}" olarak anılacaktır), müşteri ve kullanıcılarının gizliliğine en yüksek düzeyde önem vermektedir. 
               Geliştirdiğimiz "Edge AI" (Uç Nokta Yapay Zeka) mimarisi gereği, varsayılan olarak kamera görüntüleri sunucularımıza veya herhangi bir dış bulut ağına <strong>aktarılmamaktadır.</strong>
             </p>
 
@@ -35,12 +40,12 @@ export default function PrivacyPolicyPage() {
 
             <h2 className="text-xl font-bold text-primary-text mt-8 mb-4">3. Veri Paylaşımı ve Üçüncü Taraflar</h2>
             <p>
-              Alaf Teknoloji, topladığı hiçbir teknik veriyi reklam, pazarlama veya ticari kazanç sağlamak amacıyla üçüncü şahıs veya kurumlarla paylaşmaz, satmaz.
+              {brand.companyName}, topladığı hiçbir teknik veriyi reklam, pazarlama veya ticari kazanç sağlamak amacıyla üçüncü şahıs veya kurumlarla paylaşmaz, satmaz.
             </p>
 
             <h2 className="text-xl font-bold text-primary-text mt-8 mb-4">4. İletişim</h2>
             <p>
-              Gizlilik politikamız ile ilgili soru ve talepleriniz için lütfen <strong>info@alafteknoloji.com</strong> adresi üzerinden bizimle iletişime geçiniz.
+              Gizlilik politikamız ile ilgili soru ve talepleriniz için lütfen <strong className="text-accent font-mono">{brand.email}</strong> adresi üzerinden bizimle iletişime geçiniz.
             </p>
           </div>
         </article>

@@ -1,7 +1,12 @@
+"use client";
+
 import { Navbar } from "../../../components/Navbar";
 import { Footer } from "../../../components/Footer";
+import { useBrand } from "../../../lib/brand";
 
 export default function KvkkPage() {
+  const brand = useBrand();
+
   return (
     <div className="min-h-screen bg-background text-primary-text selection:bg-accent-soft/30 font-sans overflow-x-hidden flex flex-col">
       <Navbar />
@@ -10,31 +15,31 @@ export default function KvkkPage() {
         <article className="w-full max-w-4xl glass-card border border-white/10 rounded-3xl p-8 md:p-12 shadow-2xl backdrop-blur-xl">
           <h1 className="text-3xl md:text-4xl font-bold text-primary-text mb-8 border-b border-border-subtle pb-6">KVKK Aydınlatma Metni</h1>
           
-          <div className="space-y-6 text-secondary-text leading-relaxed">
+          <div className="space-y-6 text-secondary-text leading-relaxed font-light">
             <p>
               <strong>Kişisel Verilerin Korunması Kanunu (KVKK) Kapsamında Aydınlatma Metni</strong>
             </p>
             
             <p>
-              Alaf Teknoloji (Veri Sorumlusu), 6698 sayılı Kişisel Verilerin Korunması Kanunu ("Kanun") uyarınca, sizlere sunduğu ürün ve hizmetler kapsamında elde edilen kişisel verilerin korunmasına özel önem vermektedir.
+              {brand.companyName} (Veri Sorumlusu), 6698 sayılı Kişisel Verilerin Korunması Kanunu ("Kanun") uyarınca, sizlere sunduğu ürün ve hizmetler kapsamında elde edilen kişisel verilerin korunmasına özel önem vermektedir.
             </p>
 
             <h2 className="text-xl font-bold text-primary-text mt-8 mb-4">1. İşlenen Kişisel Veriler ve İşlenme Amaçları</h2>
             <p>
-              Web sitemizi ziyaret etmeniz veya ürünlerimizi (Alaf Vision sistemleri) kullanmanız dolayısıyla;
+              Web sitemizi ziyaret etmeniz veya ürünlerimizi ({brand.fullName} sistemleri) kullanmanız dolayısıyla;
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
               <li>
                 <strong>Kurumsal Bilgileriniz:</strong> Şirket unvanı, iletişim bilgileri, e-posta adresiniz vb. müşteri panelinize giriş ve lisans doğrulaması amacıyla işlenmektedir.
               </li>
               <li>
-                <strong>Görüntü İşleme Metadataları:</strong> Kameralardan elde edilen görüntüler Alaf Vision Edge teknolojisi sayesinde merkeze aktarılmadan <strong>lokal donanım üzerinde (On-Premise) işlenir.</strong> Görüntülerin kendisi (video kayıtları veya fotoğraflar) sunucularımıza iletilmez. Sunucularımıza sadece işlenmiş sonuç verileri (Örn: "Bir kişi tespit edildi") metin olarak anonimleştirilmiş halde ulaşabilir.
+                <strong>Görüntü İşleme Metadataları:</strong> Kameralardan elde edilen görüntüler {brand.edgeText} teknolojisi sayesinde merkeze aktarılmadan <strong>lokal donanım üzerinde (On-Premise) işlenir.</strong> Görüntülerin kendisi (video kayıtları veya fotoğraflar) sunucularımıza iletilmez. Sunucularımıza sadece işlenmiş sonuç verileri (Örn: "Bir kişi tespit edildi") metin olarak anonimleştirilmiş halde ulaşabilir.
               </li>
             </ul>
 
             <h2 className="text-xl font-bold text-primary-text mt-8 mb-4">2. İşlenen Kişisel Verilerin Aktarımı</h2>
             <p>
-              Alaf Teknoloji, sunucularına ulaşan herhangi bir kişisel veriyi, yasal zorunluluklar haricinde yurt içi veya yurt dışındaki üçüncü şahıs şirketlere pazarlama, analiz veya ticari amaçlarla <strong>kesinlikle aktarmaz.</strong>
+              {brand.companyName}, sunucularına ulaşan herhangi bir kişisel veriyi, yasal zorunluluklar haricinde yurt içi veya yurt dışındaki üçüncü şahıs şirketlere pazarlama, analiz veya ticari amaçlarla <strong>kesinlikle aktarmaz.</strong>
             </p>
 
             <h2 className="text-xl font-bold text-primary-text mt-8 mb-4">3. İlgili Kişinin Hakları (Kanun Madde 11)</h2>
@@ -43,7 +48,7 @@ export default function KvkkPage() {
             </p>
             
             <p className="mt-8 pt-6 border-t border-border-subtle text-sm">
-              Haklarınızı kullanmak ve detaylı bilgi almak için <strong>info@alafteknoloji.com</strong> adresi üzerinden Veri Sorumlusu sıfatıyla şirketimize başvurabilirsiniz.
+              Haklarınızı kullanmak ve detaylı bilgi almak için <strong className="text-accent font-mono">{brand.email}</strong> adresi üzerinden Veri Sorumlusu sıfatıyla şirketimize başvurabilirsiniz.
             </p>
           </div>
         </article>

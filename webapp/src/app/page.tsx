@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
+import { useBrand } from "../lib/brand";
 import {
   ArrowRight,
   ChevronDown,
@@ -18,16 +21,14 @@ import {
   Video
 } from "lucide-react";
 
-// Logo removed, imported in Navbar/Footer where needed
-
 export default function Home() {
+  const brand = useBrand();
+
   return (
     <div className="min-h-screen bg-background text-primary-text selection:bg-accent-soft/30 font-sans overflow-x-hidden">
 
       {/* --- BACKGROUND EFFECTS --- */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-
-
         <div
           className="absolute inset-0 opacity-[0.02]"
           style={{
@@ -47,7 +48,7 @@ export default function Home() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          Alaf Teknoloji Yapay Zeka Altyapısı (MIL-STD Grade)
+          {brand.infraTag} (MIL-STD Grade)
         </div>
 
         <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-primary-text max-w-5xl mx-auto leading-[1.1]">
@@ -119,7 +120,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold text-primary-text mb-3">Akıllı Şehir & Trafik</h3>
               <p className="text-secondary-text leading-relaxed font-light">
-                Milisaniyelik ALPR (Otomatik Plaka Tanıma Sistemi). Araç marka, model, renk ve hız ihlal tespiti. <span className="text-accent font-medium">visionapi.alafteknoloji.com</span> altyapısıyla sıfır gecikmeli veri akışı.
+                Milisaniyelik ALPR (Otomatik Plaka Tanıma Sistemi). Araç marka, model, renk ve hız ihlal tespiti. <span className="text-accent font-medium">{brand.domain}</span> altyapısıyla sıfır gecikmeli veri akışı.
               </p>
             </div>
 
@@ -137,11 +138,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* --- 3. NEDEN ALAF VISION? (EDGE COMPUTING) --- */}
+      {/* --- 3. NEDEN ALAF/SOM VISION? (EDGE COMPUTING) --- */}
       <section id="edge-ai" className="relative z-10 py-24 border-y border-white/10 overflow-hidden">
         <div className="container mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-primary-text mb-4">Neden Alaf Vision?</h2>
+            <h2 className="text-3xl md:text-5xl font-extrabold text-primary-text mb-4">Neden {brand.fullName}?</h2>
             <p className="text-accent font-mono text-sm uppercase tracking-widest mb-2 drop-shadow-[0_0_10px_rgba(0,240,255,0.4)]">Merkezi Değil, Uç Nokta (Edge) Mimarisi</p>
             <p className="text-secondary-text max-w-2xl mx-auto font-light">
               Veriyi üretildiği yerde, anında işliyoruz. Buluta devasa videolar göndermek yerine sadece sonuçları iletiyoruz.
@@ -165,7 +166,7 @@ export default function Home() {
                 Edge İşlem
               </div>
               <Cpu className="w-12 h-12 text-accent mb-4 drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]" />
-              <h4 className="text-primary-text font-bold mb-2">2. Yerel Alaf Düğümü</h4>
+              <h4 className="text-primary-text font-bold mb-2">2. {brand.nodeName}</h4>
               <p className="text-sm text-secondary-text font-light">Görüntü yereldeki sunucuda işlenir, anonimleştirilir ve anlamlandırılır.</p>
             </div>
 

@@ -1,14 +1,17 @@
+"use client";
+
 import { Navbar } from "../../../components/Navbar";
 import { Footer } from "../../../components/Footer";
 import { Cpu, Server, Lock, Zap } from "lucide-react";
+import { useBrand } from "../../../lib/brand";
 
 export default function EdgeAIPage() {
+  const brand = useBrand();
+
   return (
     <div className="min-h-screen bg-background text-primary-text selection:bg-accent-soft/30 font-sans overflow-x-hidden flex flex-col">
       {/* Background Effects */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        
-        
         <div 
           className="absolute inset-0 opacity-[0.02]" 
           style={{ 
@@ -35,7 +38,7 @@ export default function EdgeAIPage() {
           </h1>
           
           <p className="text-lg text-secondary-text max-w-2xl mx-auto mb-10 leading-relaxed font-light">
-            Kamera görüntülerini merkeze veya buluta göndermeyin. Alaf Vision Edge altyapısı, devasa videoları kaynağında analiz ederek sadece anlamlı olan KB boyutundaki sonuçları ağa aktarır.
+            Kamera görüntülerini merkeze veya buluta göndermeyin. {brand.edgeText} altyapısı, devasa videoları kaynağında analiz ederek sadece anlamlı olan KB boyutundaki sonuçları ağa aktarır.
           </p>
         </section>
 

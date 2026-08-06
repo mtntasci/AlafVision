@@ -4,11 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, User, ArrowRight } from "lucide-react";
 
+import { useBrand } from "../../lib/brand";
+
 export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
+  const brand = useBrand();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,9 +29,6 @@ export default function LoginPage() {
       
       {/* Background Effects matching AGENTS.md */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden flex justify-center items-center">
-        
-        
-        
         {/* Animated Grid */}
         <div 
           className="absolute inset-0 opacity-[0.02]" 
@@ -40,14 +40,13 @@ export default function LoginPage() {
       </div>
 
       <div className="relative z-10 w-full max-w-md">
-        {/* Kartlar ve Bölmeler Rule: bg-surface-1, border-border-subtle, hover:border-border-subtle (if interactive, but here it's static) */}
         <div className="glass-card p-8 sm:p-12 rounded-3xl border border-accent/30 shadow-[0_0_40px_rgba(0,240,255,0.08)] backdrop-blur-xl">
           <div className="text-center mb-10 flex flex-col items-center">
             <div className="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mb-6 border border-accent/30 shadow-[0_0_15px_rgba(0,240,255,0.2)]">
               <Lock className="w-7 h-7 text-accent" />
             </div>
             <h1 className="text-3xl font-extrabold text-primary-text mb-2 tracking-tight">
-              Alaf <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Vision</span>
+              {brand.brandNamePrefix} <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">{brand.brandNameSuffix}</span>
             </h1>
             <p className="text-secondary-text font-mono text-sm">Yönetim Paneli Girişi</p>
           </div>
@@ -98,7 +97,7 @@ export default function LoginPage() {
         </div>
         
         <p className="text-center text-secondary-text text-sm mt-8">
-          Alaf Teknoloji &copy; {new Date().getFullYear()}
+          {brand.companyName} &copy; {new Date().getFullYear()}
         </p>
       </div>
     </div>

@@ -4,8 +4,11 @@ import { useRouter } from "next/navigation";
 import { Camera, LogOut, Users, Car, ShieldAlert, Timer } from "lucide-react";
 import Link from "next/link";
 
+import { useBrand } from "../../lib/brand";
+
 export default function Dashboard() {
   const router = useRouter();
+  const brand = useBrand();
 
   const handleLogout = () => {
     localStorage.removeItem("alafvision_token");
@@ -33,7 +36,7 @@ export default function Dashboard() {
             <Camera className="w-5 h-5 text-accent" />
           </div>
           <span className="text-xl font-extrabold tracking-tight text-primary-text">
-            Alaf <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Vision</span>
+            {brand.brandNamePrefix} <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">{brand.brandNameSuffix}</span>
           </span>
         </div>
 

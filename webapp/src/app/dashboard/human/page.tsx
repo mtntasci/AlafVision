@@ -7,6 +7,7 @@ import Link from "next/link";
 import * as faceapi from "face-api.js";
 import { db } from "../../../lib/firebase";
 import { collection, getDocs } from "firebase/firestore";
+import { useBrand } from "../../../lib/brand";
 
 function getBoxCoords(box?: number[]) {
   if (!box || box.length === 0) return null;
@@ -41,6 +42,7 @@ type Snapshot = {
 
 export default function HumanDashboard() {
   const router = useRouter();
+  const brand = useBrand();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
@@ -341,7 +343,7 @@ export default function HumanDashboard() {
             <ArrowLeft className="w-5 h-5 text-secondary-text" />
           </Link>
           <span className="text-xl font-bold tracking-tight text-primary-text hidden sm:inline-block">
-            Alaf <span className="text-accent">Vision</span>
+            {brand.brandNamePrefix} <span className="text-accent">{brand.brandNameSuffix}</span>
           </span>
           <span className="flex items-center gap-1.5 ml-2 px-3 py-1 rounded-full bg-accent-soft border border-border-subtle text-accent text-[10px] sm:text-xs font-semibold uppercase tracking-wider">
             Kişi Etiketleyip Sayma

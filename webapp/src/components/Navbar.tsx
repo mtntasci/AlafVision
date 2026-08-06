@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useBrand } from "../lib/brand";
 
-// Alaf Vision Logo Component
+// Alaf / Som Vision Logo Component
 export const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -17,13 +18,15 @@ export const Logo = ({ className = "w-10 h-10" }: { className?: string }) => (
 );
 
 export function Navbar() {
+  const brand = useBrand();
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-3 group">
           <Logo className="w-9 h-9 transition-transform group-hover:scale-105" />
           <span className="text-2xl font-extrabold tracking-tight text-primary-text">
-            Alaf <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">Vision</span>
+            {brand.brandNamePrefix} <span className="text-accent drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]">{brand.brandNameSuffix}</span>
           </span>
         </Link>
         
