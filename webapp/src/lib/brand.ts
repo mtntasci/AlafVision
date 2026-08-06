@@ -10,6 +10,8 @@ export interface BrandConfig {
   companyName: string;
   domain: string;
   email: string;
+  addressLine1: string;
+  addressLine2: string;
   infraTag: string;
   nodeName: string;
   edgeText: string;
@@ -23,6 +25,8 @@ export const ALAF_BRAND: BrandConfig = {
   companyName: "Alaf Teknoloji",
   domain: "vision.alafteknoloji.com",
   email: "info@alafteknoloji.com",
+  addressLine1: "Yakacık Çarşı Mah. Panorama Sok. No: 26 Kartal",
+  addressLine2: "İstanbul, 34876, Türkiye",
   infraTag: "Alaf Teknoloji Yapay Zeka Altyapısı",
   nodeName: "Yerel Alaf Düğümü",
   edgeText: "Alaf Vision Edge",
@@ -36,6 +40,8 @@ export const SOM_SAVUNMA_BRAND: BrandConfig = {
   companyName: "Som Savunma A.Ş.",
   domain: "vision.somsav.com.tr",
   email: "info@somsav.com.tr",
+  addressLine1: "Yakacık Çarşı Mah. Panorama Sok. No: 26 Kartal",
+  addressLine2: "İstanbul, 34876, Türkiye",
   infraTag: "Som Savunma Yapay Zeka Altyapısı",
   nodeName: "Yerel Som Düğümü",
   edgeText: "Som Vision Edge",
@@ -65,13 +71,14 @@ export function useBrand(): BrandConfig {
       const searchParams = new URLSearchParams(window.location.search);
       const brandParam = searchParams.get("brand") || searchParams.get("company");
 
+      let activeBrand = ALAF_BRAND;
       if (brandParam) {
-        setBrand(getBrandConfig(brandParam));
+        activeBrand = getBrandConfig(brandParam);
       } else if (hostname.includes("somsav")) {
-        setBrand(SOM_SAVUNMA_BRAND);
-      } else {
-        setBrand(ALAF_BRAND);
+        activeBrand = SOM_SAVUNMA_BRAND;
       }
+      setBrand(activeBrand);
+      document.title = `${activeBrand.fullName} | Yapay Zeka Görüntü İşleme Platformu`;
     }
   }, []);
 

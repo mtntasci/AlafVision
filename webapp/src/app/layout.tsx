@@ -13,8 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Alaf Vision",
-  description: "Yüksek Performanslı Otomatik Plaka Tanıma ve Akıllı Görüntü Analizi Sistemi",
+  title: "Alaf Vision | Yapay Zeka Görüntü İşleme Platformu",
+  description: "Askeri standartlarda (MIL-STD) yüksek performanslı yapay zeka görüntü işleme, uç nokta (Edge AI) analitiği ve akıllı güvenlik çözümleri.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

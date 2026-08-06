@@ -52,9 +52,8 @@ export function Footer() {
             <h4 className="text-primary-text font-bold mb-6">Bize Ulaşın</h4>
             <ul className="flex flex-col gap-4 text-sm text-secondary-text font-light">
               <li className="font-mono text-accent">{brand.email}</li>
-              <li>Üniversiteler Mah. İhsan Doğramacı Bulvarı</li>
-              <li>ODTÜ Teknokent Bilişim İnovasyon Merkezi</li>
-              <li>Çankaya / Ankara</li>
+              <li>{brand.addressLine1}</li>
+              <li>{brand.addressLine2}</li>
             </ul>
           </div>
         </div>
